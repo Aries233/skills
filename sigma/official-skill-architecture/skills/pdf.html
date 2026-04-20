@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill 拆解 · pdf</title>
+<style>
+:root{--bg:#08080c;--surface:rgba(255,255,255,0.03);--surface2:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.06);--text:#ededef;--text2:rgba(255,255,255,0.55);--text3:rgba(255,255,255,0.3);--c1:#06b6d4;--c2:#34d399;--c3:#f59e0b;--c4:#f87171;--c5:#a78bfa;--c6:#f472b6;--grad:linear-gradient(135deg,var(--c1),var(--c2));--font-mono:'SF Mono','Fira Code','JetBrains Mono',monospace;--font-sans:-apple-system,'Inter',system-ui,sans-serif;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 700px 500px at 15% 8%,rgba(6,182,212,0.05),transparent),radial-gradient(ellipse 500px 500px at 85% 55%,rgba(52,211,153,0.04),transparent);pointer-events:none;z-index:0}
+.wrap{max-width:880px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+.header{margin-bottom:36px}
+.header-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;font-family:var(--font-mono);background:rgba(6,182,212,0.1);color:var(--c1);border:1px solid rgba(6,182,212,0.2);margin-bottom:12px}
+.header h1{font-size:28px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.header p{font-size:14px;color:var(--text2);max-width:640px}
+.stats{display:flex;gap:16px;margin:20px 0;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat-label{font-size:10px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.5px}
+.stat-value{font-size:15px;font-weight:600}
+.nav{display:flex;gap:6px;margin-bottom:32px;flex-wrap:wrap}
+.nav-btn{padding:7px 16px;border-radius:100px;font-size:12px;font-weight:500;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:var(--c1)}
+.section{display:none}.section.active{display:block}
+.section-title{font-size:20px;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.section-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;backdrop-filter:blur(12px)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.diagram{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:12px 0;overflow-x:auto}
+.flow{display:flex;align-items:stretch;gap:0;margin:16px 0;flex-wrap:wrap}
+.flow-step{flex:1;min-width:110px;padding:14px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);text-align:center;position:relative}
+.flow-step .step-num{font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-bottom:4px}
+.flow-step .step-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.flow-step .step-desc{font-size:11px;color:var(--text2);line-height:1.5}
+.flow-arrow{display:flex;align-items:center;color:var(--text3);font-size:18px;padding:0 4px;flex-shrink:0}
+.layers{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.layer{padding:14px 18px;border:1px solid var(--border);position:relative}
+.layer:first-child{border-radius:var(--r) var(--r) 0 0}
+.layer:last-child{border-radius:0 0 var(--r) var(--r)}
+.layer .layer-label{font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.3px}
+.layer .layer-content{font-size:13px}
+.tag{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--font-mono);letter-spacing:0.3px}
+.tag-c1{background:rgba(6,182,212,0.12);color:var(--c1)}.tag-c2{background:rgba(52,211,153,0.12);color:var(--c2)}.tag-c3{background:rgba(245,158,11,0.12);color:var(--c3)}.tag-c4{background:rgba(248,113,113,0.12);color:var(--c4)}.tag-c5{background:rgba(167,139,250,0.12);color:var(--c5)}.tag-c6{background:rgba(244,114,182,0.12);color:var(--c6)}
+.quote{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;padding:12px 16px;margin:10px 0;font-size:12px;color:var(--text2);font-family:var(--font-mono);font-style:italic;line-height:1.7}
+.info-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.info-table th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--c1);font-weight:600;font-size:11px}
+.info-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2);vertical-align:top}
+.info-table tr:hover td{color:var(--text)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+.src-box{background:rgba(0,0,0,0.4);border:1px solid rgba(6,182,212,0.15);border-radius:8px;padding:14px 18px;margin:10px 0;font-size:12px;font-family:var(--font-mono);line-height:1.7;color:var(--c1);white-space:pre-wrap}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin:16px 0;align-items:stretch}
+.vs-side{padding:16px;border-radius:var(--r);border:1px solid var(--border)}
+.vs-side.bad{background:rgba(248,113,113,0.04);border-color:rgba(248,113,113,0.15)}
+.vs-side.good{background:rgba(52,211,153,0.04);border-color:rgba(52,211,153,0.15)}
+.vs-label{font-size:11px;font-weight:600;font-family:var(--font-mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+.vs-side.bad .vs-label{color:var(--c4)}.vs-side.good .vs-label{color:var(--c2)}
+.vs-divider{display:flex;align-items:center;padding:0 12px;color:var(--text3);font-size:13px;font-weight:700}
+.vs-item{font-size:12px;color:var(--text2);margin-bottom:6px;padding-left:14px;position:relative;line-height:1.5}
+.vs-item::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%}
+.vs-side.bad .vs-item::before{background:var(--c4)}.vs-side.good .vs-item::before{background:var(--c2)}
+.pill-list{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pill{padding:5px 12px;border-radius:100px;font-size:11px;font-weight:500;border:1px solid var(--border);background:var(--surface);color:var(--text2)}
+.principle{display:flex;gap:14px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px}
+.principle-num{width:32px;height:32px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;color:#000}
+.principle-body{flex:1}
+.principle-title{font-size:13px;font-weight:600;margin-bottom:3px}
+.principle-desc{font-size:12px;color:var(--text2);line-height:1.6}
+.expandable{cursor:pointer;transition:all .2s}
+.expandable:hover{border-color:rgba(255,255,255,0.12)}
+.expandable .expand-content{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.expandable.open .expand-content{max-height:2000px}
+.expandable .expand-hint{font-size:11px;color:var(--text3);margin-top:6px;font-style:italic}
+.expandable.open .expand-hint{display:none}
+.ann{display:inline;padding:1px 6px;border-radius:3px;font-size:11px;font-family:var(--font-mono);cursor:help}
+.ann-c1{background:rgba(6,182,212,0.15);color:var(--c1)}
+.ann-c3{background:rgba(245,158,11,0.15);color:var(--c3)}
+.ann-c4{background:rgba(248,113,113,0.15);color:var(--c4)}
+.ann-c5{background:rgba(167,139,250,0.15);color:var(--c5)}
+.ann-c6{background:rgba(244,114,182,0.15);color:var(--c6)}
+.why{background:rgba(167,139,250,0.04);border-left:3px solid var(--c5);padding:12px 16px;border-radius:0 8px 8px 0;margin:10px 0;font-size:12px;color:var(--text2);line-height:1.7}
+.why-label{font-size:10px;font-weight:700;font-family:var(--font-mono);color:var(--c5);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.tree-node{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin:6px 0;font-size:13px}
+.tree-node.decision{border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.04)}
+.tree-node.action{border-color:rgba(52,211,153,0.3);background:rgba(52,211,153,0.04)}
+.tree-node.output{border-color:rgba(6,182,212,0.3);background:rgba(6,182,212,0.04)}
+.tree-node .node-label{font-size:10px;font-family:var(--font-mono);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;margin-bottom:2px}
+.tree-node.decision .node-label{color:var(--c3)}
+.tree-node.action .node-label{color:var(--c2)}
+.tree-node.output .node-label{color:var(--c1)}
+.tree-indent{padding-left:28px;border-left:2px solid var(--border);margin-left:16px}
+.tree-branch{display:flex;align-items:center;gap:8px;margin:4px 0}
+.tree-branch .branch-label{font-size:11px;font-family:var(--font-mono);font-weight:600;color:var(--c3);min-width:32px}
+.script-card{display:flex;gap:14px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;transition:all .2s}
+.script-card:hover{border-color:rgba(255,255,255,0.12)}
+.script-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;font-family:var(--font-mono)}
+.script-body{flex:1;min-width:0}
+.script-name{font-size:13px;font-weight:600;font-family:var(--font-mono);margin-bottom:2px}
+.script-meta{font-size:11px;color:var(--text3);margin-bottom:6px}
+.script-role{font-size:12px;color:var(--text2);line-height:1.6}
+.law-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px}
+.law-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:var(--grad);color:#000;font-size:12px;font-weight:700;font-family:var(--font-mono);margin-right:8px;flex-shrink:0}
+.law-title{font-size:14px;font-weight:700;display:flex;align-items:center;margin-bottom:10px}
+.law-section{margin-bottom:10px}
+.law-section-title{font-size:10px;font-weight:700;font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.law-section-title.embodied{color:var(--c1)}
+.law-section-title.consequence{color:var(--c4)}
+.law-section-title.generalize{color:var(--c2)}
+.law-section-content{font-size:12px;color:var(--text2);line-height:1.7}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Header -->
+<div class="header">
+  <div class="header-badge">skill-architecture / deep-dive</div>
+  <h1>pdf</h1>
+  <p>Anthropic 官方 PDF 处理 Skill 的架构拆解 — 三文件协作 + 八脚本工具链 + 表单填充 Decision Tree 的工程设计解析</p>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat-label">文件数</span>
+    <span class="stat-value">3 <span style="color:var(--text3);font-size:12px">+ 8 scripts + LICENSE</span></span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">SKILL.md</span>
+    <span class="stat-value">314 行</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">reference.md</span>
+    <span class="stat-value">612 行</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">forms.md</span>
+    <span class="stat-value">295 行</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">类型</span>
+    <span class="stat-value" style="color:var(--c5)">知识库型 + 脚本增强</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">核心特征</span>
+    <span class="stat-value" style="color:var(--c3)">三文件协作 · 按需加载</span>
+  </div>
+</div>
+
+<!-- Nav -->
+<div class="nav">
+  <button class="nav-btn active" onclick="show(0,this)">总览</button>
+  <button class="nav-btn" onclick="show(1,this)">三文件职责分离</button>
+  <button class="nav-btn" onclick="show(2,this)">脚本工具链</button>
+  <button class="nav-btn" onclick="show(3,this)">Decision Tree</button>
+  <button class="nav-btn" onclick="show(4,this)">Prompt vs Code</button>
+  <button class="nav-btn" onclick="show(5,this)">设计原则</button>
+  <button class="nav-btn" onclick="show(6,this)" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);color:var(--c3)">实战框架</button>
+</div>
+
+<!-- ===================== SECTION 0: 总览 ===================== -->
+<div class="section active" id="s0">
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon" style="background:var(--grad);color:#000">?</span>
+    为什么 PDF 需要拆成 3 个 Markdown + 8 个脚本，而 frontend-design 只需要 1 个 43 行的 SKILL.md？
+  </div>
+  <div style="font-size:13px;color:var(--text2);line-height:1.8">
+    答案在于两者的 <span class="ann ann-c1">任务谱系</span> 完全不同——这是你之前学过的 <strong>Output Verifiability</strong> 原则的直接应用。
+  </div>
+</div>
+
+<div class="info-table" style="margin-top:16px">
+<table>
+<tr><th>Skill</th><th>任务特征</th><th>产出可验证性</th><th>架构选择</th><th>理由</th></tr>
+<tr>
+  <td style="color:var(--text)">frontend-design</td>
+  <td>单一主观产出<br><span style="font-size:11px;color:var(--text3)">生成前端页面</span></td>
+  <td><span class="tag tag-c4">不可验证</span></td>
+  <td>单文件纯约束</td>
+  <td>产出不可验证 → 全靠前置约束；不需要工具链</td>
+</tr>
+<tr>
+  <td style="color:var(--text)">pdf</td>
+  <td>多种客观操作<br><span style="font-size:11px;color:var(--text3)">提取/合并/拆分/填表/加密…</span></td>
+  <td><span class="tag tag-c2">可验证</span></td>
+  <td>多文件 + 脚本</td>
+  <td>操作可验证 → 校验循环；任务类型多 → 需要路由分流</td>
+</tr>
+</table>
+</div>
+
+<div class="why">
+  <div class="why-label">设计理由</div>
+  单一主观产出用前置约束控制质量；多种客观操作用分层加载 + 脚本校验保证正确性。两者的架构模式差异源于<strong>产出是否可以被客观校验</strong>。
+</div>
+
+<h3 style="font-size:16px;font-weight:700;margin:28px 0 16px">文件结构树</h3>
+
+<div class="diagram" style="font-family:var(--font-mono);font-size:12px;line-height:2">
+  <div style="color:var(--c1)">skills/pdf/</div>
+  <div style="padding-left:20px">
+    <div><span style="color:var(--c3)">SKILL.md</span> <span class="tag tag-c1">主入口 · 速查手册</span> <span style="color:var(--text3);font-size:11px">314 行</span></div>
+    <div><span style="color:var(--c3)">reference.md</span> <span class="tag tag-c5">高级参考 · 按需加载</span> <span style="color:var(--text3);font-size:11px">612 行</span></div>
+    <div><span style="color:var(--c3)">forms.md</span> <span class="tag tag-c4">表单专项 · 条件加载</span> <span style="color:var(--text3);font-size:11px">295 行 · CRITICAL 流程</span></div>
+    <div><span style="color:var(--c3)">LICENSE.txt</span> <span style="color:var(--text3);font-size:11px">Proprietary</span></div>
+    <div style="color:var(--c2)">scripts/</div>
+    <div style="padding-left:20px">
+      <div><span style="color:var(--text)">check_fillable_fields.py</span> <span class="tag tag-c3">路由决策</span></div>
+      <div><span style="color:var(--text)">check_bounding_boxes.py</span> <span class="tag tag-c3">校验器</span></div>
+      <div><span style="color:var(--text)">extract_form_field_info.py</span> <span class="tag tag-c1">可填充字段提取</span></div>
+      <div><span style="color:var(--text)">extract_form_structure.py</span> <span class="tag tag-c1">结构提取</span></div>
+      <div><span style="color:var(--text)">convert_pdf_to_images.py</span> <span class="tag tag-c5">PDF→图片</span></div>
+      <div><span style="color:var(--text)">fill_fillable_fields.py</span> <span class="tag tag-c2">填充·可填充</span></div>
+      <div><span style="color:var(--text)">fill_pdf_form_with_annotations.py</span> <span class="tag tag-c2">填充·注解叠加</span></div>
+      <div><span style="color:var(--text)">create_validation_image.py</span> <span class="tag tag-c5">bbox 可视化</span></div>
+    </div>
+  </div>
+</div>
+
+<h3 style="font-size:16px;font-weight:700;margin:28px 0 16px">三文件加载时机</h3>
+
+<div class="flow">
+  <div class="flow-step">
+    <div class="step-num">触发</div>
+    <div class="step-title">用户提及 PDF</div>
+    <div class="step-desc">description 匹配<br>.pdf / 提取 / 合并…</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" style="border-color:rgba(6,182,212,0.3)">
+    <div class="step-num">Layer 1</div>
+    <div class="step-title" style="color:var(--c1)">SKILL.md</div>
+    <div class="step-desc">始终加载<br>覆盖 80% 常见操作</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" style="border-color:rgba(167,139,250,0.3)">
+    <div class="step-num">Layer 2</div>
+    <div class="step-title" style="color:var(--c5)">reference.md</div>
+    <div class="step-desc">按需加载<br>Quick Reference 无法覆盖时</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" style="border-color:rgba(248,113,113,0.3)">
+    <div class="step-num">Layer 3</div>
+    <div class="step-title" style="color:var(--c4)">forms.md</div>
+    <div class="step-desc">条件加载<br>仅表单填充任务</div>
+  </div>
+</div>
+
+<div class="why">
+  <div class="why-label">设计理由</div>
+  PDF 操作场景极多（合并、拆分、提取、创建、OCR、加密、填表…），如果全部塞进一个文件，每次触发都加载全部内容，大部分 token 浪费在当前不需要的场景上。三文件分层 = <strong>Context Window 预算管理</strong>。
+</div>
+
+</div>
+
+<!-- ===================== SECTION 1: 三文件职责分离 ===================== -->
+<div class="section" id="s1">
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon" style="background:rgba(6,182,212,0.15);color:var(--c1)">1</span>
+    SKILL.md — 主入口速查手册（314 行）
+  </div>
+  <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">
+    覆盖 80% 常见任务的"快速路径"。包含 pypdf、pdfplumber、reportlab 的核心操作代码片段 + Quick Reference 速查表。
+  </div>
+  <div style="font-size:12px;color:var(--text2);line-height:1.7">
+    <strong style="color:var(--text)">关键设计</strong>：
+  </div>
+  <div class="pill-list">
+    <span class="pill">每段代码自包含、可直接复制执行</span>
+    <span class="pill">Quick Reference 表格：任务 → 最佳工具 → 一行命令</span>
+    <span class="pill">Next Steps 路由指针指向 reference.md / forms.md</span>
+    <span class="pill">特殊约束：ReportLab 上下标禁止用 Unicode</span>
+  </div>
+</div>
+
+<div class="why">
+  <div class="why-label">设计理由</div>
+  <strong>核心路径覆盖 80% 用例，边缘路径按需加载</strong>。如果把 OCR、表单、JavaScript 库全部塞进 SKILL.md，每次合并两个 PDF 也要加载 1500+ 行无关内容——token 预算浪费，关键指令被稀释。
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon" style="background:rgba(167,139,250,0.15);color:var(--c5)">2</span>
+    reference.md — 高级参考（612 行）
+  </div>
+  <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">
+    覆盖剩余 20% 边缘/高级场景。按需加载，不会污染日常操作的 Context Window。
+  </div>
+  <div class="pill-list">
+    <span class="pill">pypdfium2 — Chromium PDFium 绑定，高速渲染</span>
+    <span class="pill">pdf-lib / pdfjs-dist — JavaScript 库操作</span>
+    <span class="pill">poppler / qpdf 进阶 CLI 用法</span>
+    <span class="pill">批量处理 · 性能优化 · 故障排查</span>
+  </div>
+</div>
+
+<div class="why">
+  <div class="why-label">设计理由</div>
+  触发机制：SKILL.md 末尾的 <span class="ann ann-c1">Next Steps</span> 是"路由指针"——"For advanced pypdfium2 usage, see REFERENCE.md"。LLM 在快速路径受阻时，顺着指针找到深度资源。<strong>不是把字典和百科全书印在同一本书里</strong>。
+</div>
+
+<div class="card">
+  <div class="card-title">
+    <span class="icon" style="background:rgba(248,113,113,0.15);color:var(--c4)">3</span>
+    forms.md — 表单专项流程（295 行 · CRITICAL）
+  </div>
+  <div style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">
+    完整的表单填充 Decision Tree。强制顺序执行，三条分支路径。
+  </div>
+  <div class="src-box">CRITICAL: You MUST complete these steps in order. Do not skip ahead to writing code.</div>
+  <div style="font-size:11px;color:var(--text3);margin-top:4px">【译文】关键：你必须按顺序完成这些步骤。不要跳过直接写代码。</div>
+  <div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.7">
+    这行 CRITICAL 声明的作用：<strong>对 LLM 跳步倾向的显式防御</strong>。表单填充是多步骤分支流程，跳步 = 走错分支 = 产出损坏。
+  </div>
+</div>
+
+<div class="why">
+  <div class="why-label">设计理由</div>
+  为什么独立成文件而不是 SKILL.md 里的一个 section？<br><br>
+  <strong>Decision Tree 的完整性保护</strong>——独立文件的隐含语义是"这是一个原子操作，要么完整执行，要么不执行"。如果放在 SKILL.md 里作为 section，LLM 容易在阅读其他 section 时"分心"，跳过关键的 check_fillable_fields 路由步骤。
+</div>
+
+<h3 style="font-size:16px;font-weight:700;margin:28px 0 16px">三文件对比</h3>
+
+<table class="info-table">
+<tr><th></th><th style="color:var(--c1)">SKILL.md</th><th style="color:var(--c5)">reference.md</th><th style="color:var(--c4)">forms.md</th></tr>
+<tr><td style="color:var(--text)">定位</td><td>速查手册</td><td>高级参考</td><td>专项流程</td></tr>
+<tr><td style="color:var(--text)">行数</td><td>314</td><td>612</td><td>295</td></tr>
+<tr><td style="color:var(--text)">加载时机</td><td><span class="tag tag-c2">始终</span></td><td><span class="tag tag-c3">按需</span></td><td><span class="tag tag-c4">条件</span></td></tr>
+<tr><td style="color:var(--text)">覆盖范围</td><td>80% 常见操作</td><td>20% 边缘场景</td><td>表单填充全流程</td></tr>
+<tr><td style="color:var(--text)">内容形态</td><td>代码片段 + 速查表</td><td>代码片段 + 性能指南</td><td>Decision Tree + 脚本调用链</td></tr>
+<tr><td style="color:var(--text)">是否引用脚本</td><td><span style="color:var(--c4)">否</span></td><td><span style="color:var(--c4)">否</span></td><td><span style="color:var(--c2)">是 · 8个全引用</span></td></tr>
+</table>
+
+</div>
+
+<!-- ===================== SECTION 2: 脚本工具链 ===================== -->
+<div class="section" id="s2">
+
+<div class="section-title">脚本工具链解剖</div>
+<div class="section-sub">8 个脚本按功能分四组，每个回答：做什么？为什么是脚本而不是 Prompt？</div>
+
+<h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--c3)">诊断组 — 路由与校验</h3>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(245,158,11,0.12);color:var(--c3)">?</div>
+  <div class="script-body">
+    <div class="script-name">check_fillable_fields.py <span class="tag tag-c3">268B</span></div>
+    <div class="script-meta">依赖：pypdf · 输入：PDF · 输出：stdout 文本</div>
+    <div class="script-role">判断 PDF 是否有可填充字段。这是整个 forms.md 的<strong>路由入口</strong>——决定走 fillable 还是 non-fillable 分支。整个脚本只有 11 行有效代码。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本</div>
+      需要调用 pypdf 解析 PDF 内部结构。LLM 无法"看到"PDF 的表单字段元数据，必须通过代码读取。
+    </div>
+  </div>
+</div>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(245,158,11,0.12);color:var(--c3)">✓</div>
+  <div class="script-body">
+    <div class="script-name">check_bounding_boxes.py <span class="tag tag-c3">2.7KB</span></div>
+    <div class="script-meta">依赖：无 · 输入：fields.json · 输出：stdout 校验结果</div>
+    <div class="script-role">检测 bbox 重叠和高度不足。遍历所有 label/entry bbox 对，计算矩形交集，报告错误。<strong>Fail-Closed 设计</strong>：检测到任何重叠就报告 FAILURE。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本</div>
+      矩形相交检测是确定性算法。LLM 的空间推理不可靠——让 LLM 判断"这两个框是否重叠"等于让一个没有眼睛的人判断两张照片是否一样。<strong>LLM 不擅长的事情 → 用确定性代码兜底</strong>。
+    </div>
+  </div>
+</div>
+
+<h3 style="font-size:14px;font-weight:700;margin:20px 0 12px;color:var(--c1)">提取组 — 从 PDF 中抽信息</h3>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(6,182,212,0.12);color:var(--c1)">E</div>
+  <div class="script-body">
+    <div class="script-name">extract_form_field_info.py <span class="tag tag-c1">4.3KB</span></div>
+    <div class="script-meta">依赖：pypdf · 输入：PDF · 输出：field_info.json</div>
+    <div class="script-role">提取可填充字段的完整元数据：字段 ID、页码、坐标、类型（text/checkbox/radio_group/choice）、合法值。处理了 pypdf 的字段继承（/Parent 链）和 radio group 的嵌套结构。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本</div>
+      需要遍历 PDF 的 /Annots 注解树，解析 /FT、/_States_、/AP 等内部字段。这些是 PDF 规范底层的二进制结构——<strong>LLM 没有直接访问 PDF 内部结构的能力</strong>。
+    </div>
+  </div>
+</div>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(6,182,212,0.12);color:var(--c1)">E</div>
+  <div class="script-body">
+    <div class="script-name">extract_form_structure.py <span class="tag tag-c1">3.9KB</span></div>
+    <div class="script-meta">依赖：pdfplumber · 输入：PDF · 输出：form_structure.json</div>
+    <div class="script-role">提取不可填充表单的结构：文本标签（words + 坐标）、横线（宽度 > 页面 50% 的水平线）、checkbox（5-15px 的正方形矩形）、行边界（相邻横线之间的区域）。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本</div>
+      pdfplumber 的字符级坐标提取是确定性操作。脚本还做了业务判断（什么样的矩形是 checkbox？宽 > 页面 50% 的线才是行分隔线）——<strong>这些启发式规则比告诉 LLM "找到所有的 checkbox"可靠得多</strong>。
+    </div>
+  </div>
+</div>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(6,182,212,0.12);color:var(--c1)">I</div>
+  <div class="script-body">
+    <div class="script-name">convert_pdf_to_images.py <span class="tag tag-c1">1KB</span></div>
+    <div class="script-meta">依赖：pdf2image · 输入：PDF · 输出：PNG 图片目录</div>
+    <div class="script-role">PDF → PNG，用于视觉分析。限制最大维度 1000px，平衡精度与 token 开销。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本</div>
+      LLM 只能"看"图片，不能"看" PDF。<strong>这是 LLM 的感知边界的补偿层</strong>——脚本把 LLM 无法直接消费的格式转为 LLM 能处理的格式。
+    </div>
+  </div>
+</div>
+
+<h3 style="font-size:14px;font-weight:700;margin:20px 0 12px;color:var(--c2)">执行组 — 写入 PDF</h3>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(52,211,153,0.12);color:var(--c2)">F</div>
+  <div class="script-body">
+    <div class="script-name">fill_fillable_fields.py <span class="tag tag-c2">3.8KB</span></div>
+    <div class="script-meta">依赖：pypdf · 输入：PDF + field_values.json · 输出：填充后的 PDF</div>
+    <div class="script-role">填充可填充表单。包含字段值校验（checkbox/radio/choice 的合法值检查）+ <strong>monkeypatch pypdf 的 /Opt 字段解析 bug</strong>。校验失败直接 <code style="color:var(--c4)">sys.exit(1)</code>。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本 — 且含 monkeypatch</div>
+      <strong>库的已知缺陷 → 封装在脚本层对 LLM 透明</strong>。pypdf 解析 /Opt 字段时返回嵌套列表而非扁平值，这是库的 bug。官方选择在脚本里打补丁而不是告诉 LLM "记得处理这个 bug"——因为 LLM 不应该在运行时做库的 bug 兼容，这属于确定性工程问题。
+    </div>
+  </div>
+</div>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(52,211,153,0.12);color:var(--c2)">F</div>
+  <div class="script-body">
+    <div class="script-name">fill_pdf_form_with_annotations.py <span class="tag tag-c2">3.2KB</span></div>
+    <div class="script-meta">依赖：pypdf · 输入：PDF + fields.json · 输出：注解叠加后的 PDF</div>
+    <div class="script-role">用 FreeText 注解填充不可填充表单。自动检测 <code style="color:var(--c1)">pdf_width</code> vs <code style="color:var(--c5)">image_width</code> 关键字，选择对应的坐标转换函数。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本 — 双坐标系转换</div>
+      PDF 坐标 y=0 在<strong>底部</strong>，图片坐标 y=0 在<strong>顶部</strong>。同一个填写操作要兼容两种来源。<strong>设计模式：LLM 只负责标注来源（用哪个关键字），脚本负责转换逻辑</strong>。不让 LLM 做数学计算。
+    </div>
+  </div>
+</div>
+
+<h3 style="font-size:14px;font-weight:700;margin:20px 0 12px;color:var(--c5)">验证组 — 可视化确认</h3>
+
+<div class="script-card">
+  <div class="script-icon" style="background:rgba(167,139,250,0.12);color:var(--c5)">V</div>
+  <div class="script-body">
+    <div class="script-name">create_validation_image.py <span class="tag tag-c5">1.2KB</span></div>
+    <div class="script-meta">依赖：PIL · 输入：fields.json + 页面图片 · 输出：标注图片</div>
+    <div class="script-role">在图片上画出 bbox：红色 = 填写区，蓝色 = 标签区。用于填写前的可视化验证。</div>
+    <div class="why" style="margin-top:8px;margin-bottom:0">
+      <div class="why-label">为什么是脚本</div>
+      填写前确认 bbox 定位是否准确——<strong>不可逆操作前的可视化验证手段</strong>。直接修改 PDF 是不可逆的，错位了用户可能不打开就发现不了。
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ===================== SECTION 3: Decision Tree ===================== -->
+<div class="section" id="s3">
+
+<div class="section-title">表单填充 Decision Tree</div>
+<div class="section-sub">PDF skill 最有架构价值的部分 — 一个完整的分支决策树，覆盖现实中 PDF 表单的三种形态</div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="card-title">为什么需要这么复杂的分支树？</div>
+  <div style="font-size:13px;color:var(--text2);line-height:1.7">
+    PDF 表单在现实中存在三种形态，每种需要完全不同的处理策略：
+  </div>
+  <table class="info-table" style="margin-top:10px">
+  <tr><th>形态</th><th>比例（经验值）</th><th>处理方式</th></tr>
+  <tr><td style="color:var(--text)">有可填充字段（fillable）</td><td>~40%</td><td>直接写字段值</td></tr>
+  <tr><td style="color:var(--text)">无字段但文本结构可提取</td><td>~40%</td><td>结构坐标定位 + 注解叠加</td></tr>
+  <tr><td style="color:var(--text)">扫描件/纯图片</td><td>~20%</td><td>视觉估算 + Zoom Refinement</td></tr>
+  </table>
+  <div class="why" style="margin-top:12px;margin-bottom:0">
+    <div class="why-label">设计理由</div>
+    为什么不让 LLM 自己判断用哪种方式？因为 LLM 有强烈的<strong>"简化倾向"</strong>——拿到一个 PDF，它会倾向于用同一种方式处理所有情况。forms.md 的设计是<strong>强制 LLM 先用 check_fillable_fields.py 路由，然后严格按照分支执行</strong>。
+  </div>
+</div>
+
+<!-- Decision Tree Visualization -->
+<div class="tree-node decision">
+  <div class="node-label">入口</div>
+  <div style="font-size:13px">用户要填表单 → 加载 <span style="color:var(--c1)">forms.md</span></div>
+</div>
+
+<div class="tree-node decision">
+  <div class="node-label">路由决策</div>
+  <div style="font-size:13px">执行 <code style="color:var(--c3)">check_fillable_fields.py</code> → 判断是否有可填充字段</div>
+</div>
+
+<div class="tree-indent">
+  <div class="tree-branch">
+    <div class="branch-label">YES</div>
+    <div style="font-size:12px;color:var(--c2)">→ 走 <strong>Fillable 分支</strong>（~40% 场景）</div>
+  </div>
+  <div class="tree-indent">
+    <div class="tree-node action">
+      <div class="node-label">Step 1 · 提取字段元数据</div>
+      <div style="font-size:12px"><code style="color:var(--c1)">extract_form_field_info.py</code> → field_info.json<br>
+      获取字段 ID、类型、坐标、合法值（checkbox 的 checked_value 等）</div>
+    </div>
+    <div class="tree-node action">
+      <div class="node-label">Step 2 · 视觉定位</div>
+      <div style="font-size:12px"><code style="color:var(--c5)">convert_pdf_to_images.py</code> → 页面图片<br>
+      LLM 看图片理解每个字段的语义（"这个是姓氏"、"这个是同意条款"）</div>
+    </div>
+    <div class="tree-node action">
+      <div class="node-label">Step 3 · LLM 生成填写值</div>
+      <div style="font-size:12px">LLM 写 <code style="color:var(--c1)">field_values.json</code> — 每个字段的填写值<br>
+      <span style="color:var(--text3);font-size:11px">LLM 唯一的"判断"环节：根据用户需求决定每个字段填什么</span></div>
+    </div>
+    <div class="tree-node action">
+      <div class="node-label">Step 4 · 执行填充</div>
+      <div style="font-size:12px"><code style="color:var(--c2)">fill_fillable_fields.py</code> → 填充后的 PDF<br>
+      <span style="color:var(--c4);font-size:11px">内含字段值校验 + monkeypatch，校验失败 sys.exit(1)</span></div>
+    </div>
+    <div class="tree-node output">
+      <div class="node-label">验证</div>
+      <div style="font-size:12px">转图片 → 人工确认 → 完成</div>
+    </div>
+  </div>
+
+  <div class="tree-branch" style="margin-top:12px">
+    <div class="branch-label">NO</div>
+    <div style="font-size:12px;color:var(--c5)">→ 走 <strong>Non-fillable 分支</strong>（~60% 场景）</div>
+  </div>
+  <div class="tree-indent">
+    <div class="tree-node decision">
+      <div class="node-label">二次路由</div>
+      <div style="font-size:13px">执行 <code style="color:var(--c3)">extract_form_structure.py</code> → form_structure.json → 判断是否有文本标签</div>
+    </div>
+
+    <div class="tree-indent">
+      <div class="tree-branch">
+        <div class="branch-label">有标签</div>
+        <div style="font-size:12px;color:var(--c2)">→ <strong>Approach A：结构坐标定位</strong>（高精度）</div>
+      </div>
+      <div class="tree-indent">
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;padding:6px 0">
+          利用 form_structure.json 的精确坐标直接计算 entry bbox<br>
+          <code style="color:var(--c1)">check_bounding_boxes.py</code> 校验 → <code style="color:var(--c2)">fill_pdf_form_with_annotations.py</code> 填充 → 转图片验证
+        </div>
+        <div class="why" style="margin-bottom:8px">
+          <div class="why-label">为什么优先尝试结构提取</div>
+          结构提取的坐标精度<strong>远高于</strong>视觉估算。PDF 内部的字符坐标是数学精确的，而视觉估算依赖 LLM 对图片的像素级判断。
+        </div>
+      </div>
+
+      <div class="tree-branch">
+        <div class="branch-label">无标签</div>
+        <div style="font-size:12px;color:var(--c4)">→ <strong>Approach B：视觉估算 + Zoom Refinement</strong>（低精度 fallback）</div>
+      </div>
+      <div class="tree-indent">
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;padding:6px 0">
+          <code style="color:var(--c5)">convert_pdf_to_images.py</code> 转图片 → LLM 粗估坐标 →
+          <strong>ImageMagick 裁剪放大</strong> → 精确坐标 →
+          <code style="color:var(--c1)">check_bounding_boxes.py</code> →
+          <code style="color:var(--c2)">fill_pdf_form_with_annotations.py</code> → 转图片验证
+        </div>
+        <div class="why" style="margin-bottom:8px">
+          <div class="why-label">设计模式：Graceful Degradation</div>
+          先尝试高精度方法，失败后降级到低精度方法。Zoom Refinement 是对低精度的二次补偿——<strong>裁剪局部区域放大后再判断</strong>，减少全局坐标估算的误差。
+        </div>
+      </div>
+
+      <div class="tree-branch">
+        <div class="branch-label">部分</div>
+        <div style="font-size:12px;color:var(--c6)">→ <strong>Hybrid：A + B 混合</strong></div>
+      </div>
+      <div class="tree-indent">
+        <div style="font-size:12px;color:var(--text2);line-height:1.8;padding:6px 0">
+          结构提取能处理的字段用 Approach A，检测不到的（如圆形 checkbox）用视觉估算。<br>
+          统一转换为 PDF 坐标系：<code style="color:var(--c1)">pdf_x = image_x × (pdf_width / image_width)</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="why" style="margin-top:16px">
+  <div class="why-label">核心设计洞察</div>
+  <strong>先尝试高精度方法，失败后降级到低精度方法</strong>——这是经典的 Graceful Degradation 模式。而为什么每次填写后都要 convert_pdf_to_images + 视觉验证？因为 LLM 无法直接"看到" PDF 的渲染结果。<strong>对不可逆操作（直接修改 PDF），必须提供验证手段</strong>。
+</div>
+
+</div>
+
+<!-- ===================== SECTION 4: Prompt vs Code ===================== -->
+<div class="section" id="s4">
+
+<div class="section-title">Prompt vs Code 边界</div>
+<div class="section-sub">从 PDF skill 提炼的三条通用法则 — 什么放 Prompt，什么封装成脚本</div>
+
+<div class="vs" style="margin-bottom:24px">
+  <div class="vs-side bad">
+    <div class="vs-label">写在 Prompt 里（知识模式）</div>
+    <div class="vs-item">工具选择决策："什么任务用什么库"</div>
+    <div class="vs-item">代码片段模板：可直接复制执行的样板代码</div>
+    <div class="vs-item">约束规则：如 ReportLab Unicode 上下标陷阱</div>
+    <div class="vs-item">性能优化策略：大文件用 streaming 等</div>
+    <div class="vs-item">Quick Reference 速查表</div>
+  </div>
+  <div class="vs-divider">vs</div>
+  <div class="vs-side good">
+    <div class="vs-label">写成脚本（确定性执行）</div>
+    <div class="vs-item">坐标系转换：两种 Y 轴方向不同，LLM 算错一个像素就偏移</div>
+    <div class="vs-item">字段值校验：checkbox 合法值是 pypdf 内部编码如 /On</div>
+    <div class="vs-item">bbox 冲突检测：矩形相交的确定性算法</div>
+    <div class="vs-item">pypdf bug 修补：monkeypatch /Opt 字段解析异常</div>
+    <div class="vs-item">PDF 渲染 + 图片生成：LLM 无法直接消费 PDF</div>
+  </div>
+</div>
+
+<h3 style="font-size:16px;font-weight:700;margin:28px 0 16px">三条通用法则</h3>
+
+<div class="law-card">
+  <div class="law-title"><span class="law-num">1</span> LLM 做"判断"，脚本做"执行"</div>
+  <div class="law-section">
+    <div class="law-section-title embodied">PDF skill 中的体现</div>
+    <div class="law-section-content">LLM 决定"这个 PDF 是 fillable 的，用 extract_form_field_info.py"，但不参与字段值的编码转换。<br>LLM 决定"这个字段应该填 Smith"，但不参与将 "Smith" 写入 PDF 二进制结构的过程。</div>
+  </div>
+  <div class="law-section">
+    <div class="law-section-title consequence">不遵循的后果</div>
+    <div class="law-section-content">让 LLM 负责坐标系转换 → Y 轴方向搞反 → 文字写到页面外面。让 LLM 猜 checkbox 的合法值 → 写入错误编码 → PDF 损坏。</div>
+  </div>
+  <div class="law-section">
+    <div class="law-section-title generalize">通用化</div>
+    <div class="law-section-content">设计 Skill 时问自己：<strong>"这一步 LLM 做错了后果严重吗？"</strong> 如果答案是"是"，就封装成脚本。</div>
+  </div>
+</div>
+
+<div class="law-card">
+  <div class="law-title"><span class="law-num">2</span> LLM 做"标注"，脚本做"转换"</div>
+  <div class="law-section">
+    <div class="law-section-title embodied">PDF skill 中的体现</div>
+    <div class="law-section-content">LLM 在 fields.json 里写 <code>"image_width": 1700</code> 或 <code>"pdf_width": 612</code>，脚本 <code>fill_pdf_form_with_annotations.py</code> 根据这个关键字自动选择坐标转换函数。<br><br>
+    <div class="src-box" style="margin:8px 0;font-size:11px;padding:10px 14px"><span style="color:var(--text3)"># fill_pdf_form_with_annotations.py:55-58</span>
+<span style="color:var(--c5)">if</span> <span style="color:var(--c1)">"pdf_width"</span> in page_info:
+    <span style="color:var(--text)">transformed</span> = <span style="color:var(--c1)">transform_from_pdf_coords</span>(...)  <span style="color:var(--text3)"># Y轴翻转</span>
+<span style="color:var(--c5)">else</span>:
+    <span style="color:var(--text)">transformed</span> = <span style="color:var(--c5)">transform_from_image_coords</span>(...)  <span style="color:var(--text3)"># 缩放+翻转</span></div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">【译文】如果 page_info 中包含 "pdf_width" → 用 PDF 坐标转换（仅 Y 轴翻转）；否则 → 用图片坐标转换（缩放+翻转）。</div>
+    </div>
+  </div>
+  <div class="law-section">
+    <div class="law-section-title consequence">不遵循的后果</div>
+    <div class="law-section-content">让 LLM 自己做坐标转换 → PDF 坐标 y=0 在底部，图片 y=0 在顶部 → LLM 混淆方向 → 所有文字 Y 坐标偏移。</div>
+  </div>
+  <div class="law-section">
+    <div class="law-section-title generalize">通用化</div>
+    <div class="law-section-content"><strong>不要让 LLM 做数学计算或格式转换</strong>。让 LLM 提供原始信息（标注来源），脚本处理变换。</div>
+  </div>
+</div>
+
+<div class="law-card">
+  <div class="law-title"><span class="law-num">3</span> 每一步都要有"验收门槛"</div>
+  <div class="law-section">
+    <div class="law-section-title embodied">PDF skill 中的体现</div>
+    <div class="law-section-content" style="line-height:2">
+      <span style="color:var(--c3)">填写前</span>：<code>check_bounding_boxes.py</code> 校验 bbox 不重叠、高度够用<br>
+      <span style="color:var(--c2)">填写时</span>：<code>fill_fillable_fields.py</code> 校验字段值合法，否则 sys.exit(1)<br>
+      <span style="color:var(--c1)">填写后</span>：<code>convert_pdf_to_images.py</code> 转图片 → 人工确认
+    </div>
+  </div>
+  <div class="law-section">
+    <div class="law-section-title consequence">不遵循的后果</div>
+    <div class="law-section-content">错误值静默写入 PDF → 用户不打开不发现 → 打开时文字重叠或位置错误 → 不可逆。</div>
+  </div>
+  <div class="law-section">
+    <div class="law-section-title generalize">通用化</div>
+    <div class="law-section-content">对于多步骤流程：在<strong>"不可逆操作"之前</strong>加校验点，在<strong>"不可见操作"之后</strong>加验证点。</div>
+  </div>
+</div>
+
+</div>
+
+<!-- ===================== SECTION 5: 设计原则 ===================== -->
+<div class="section" id="s5">
+
+<div class="section-title">6 条可复用设计原则</div>
+<div class="section-sub">每条包含：原则名称 → PDF skill 中的体现 → 不遵循的后果 → 通用化到其他 Skill 的场景</div>
+
+<div class="principle">
+  <div class="principle-num">1</div>
+  <div class="principle-body">
+    <div class="principle-title">Progressive Disclosure — 渐进加载</div>
+    <div class="principle-desc">
+      <span class="ann ann-c1">体现</span> SKILL.md（314行）→ reference.md（612行）→ forms.md（295行），按需深入<br>
+      <span class="ann ann-c4">不遵循</span> 每次触发加载 1200+ 行全部内容，token 浪费 + 关键指令被稀释<br>
+      <span class="ann ann-c2">通用化</span> 任何覆盖 3 种以上操作类型的 Skill 都应分层。每层的触发条件要明确写在上一层末尾（如 Next Steps 路由指针）
+    </div>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-num">2</div>
+  <div class="principle-body">
+    <div class="principle-title">CRITICAL 强制顺序 — 防跳步</div>
+    <div class="principle-desc">
+      <span class="ann ann-c1">体现</span> forms.md 开头的 <code>CRITICAL: You MUST complete these steps in order</code><br>
+      <span class="ann ann-c4">不遵循</span> LLM 跳过 check_fillable_fields 直接填表 → 走错分支 → 产出损坏<br>
+      <span class="ann ann-c2">通用化</span> 任何多步骤流程型 Skill 的入口都应加强制顺序声明。CRITICAL 关键词比普通指令的遵从率高得多
+    </div>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-num">3</div>
+  <div class="principle-body">
+    <div class="principle-title">Fail-Closed 校验 — 不信任 LLM 产出</div>
+    <div class="principle-desc">
+      <span class="ann ann-c1">体现</span> fill_fillable_fields.py 的 <code>sys.exit(1)</code> + check_bounding_boxes.py 的重叠检测。任何校验失败就停止，不尝试"继续试试看"<br>
+      <span class="ann ann-c4">不遵循</span> 错误值静默写入 PDF → 用户不打开不发现 → 文字重叠或字段错乱<br>
+      <span class="ann ann-c2">通用化</span> 在 LLM 产出直接修改文件的场景，必须加确定性校验。Fail-Closed（有错就停）优于 Fail-Open（有错也继续）
+    </div>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-num">4</div>
+  <div class="principle-body">
+    <div class="principle-title">Graceful Degradation — 双路径降级</div>
+    <div class="principle-desc">
+      <span class="ann ann-c1">体现</span> Non-fillable 分支里的三级降级：结构提取（高精度）→ 视觉估算 + Zoom（低精度）→ 混合方案<br>
+      <span class="ann ann-c4">不遵循</span> 扫描件 PDF 无法处理（只用结构提取），或高精度场景被迫用低精度方法（只用视觉估算）<br>
+      <span class="ann ann-c2">通用化</span> 任何<strong>输入质量不确定</strong>的 Skill 都应设计降级路径。先尝试最优方法，失败后 fallback，而不是假设所有输入都是理想状态
+    </div>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-num">5</div>
+  <div class="principle-body">
+    <div class="principle-title">验证闭环 — 不可见操作的补偿</div>
+    <div class="principle-desc">
+      <span class="ann ann-c1">体现</span> 填写 → convert_pdf_to_images → 人工确认。scripts 里还有 create_validation_image.py 用于填写前可视化 bbox<br>
+      <span class="ann ann-c4">不遵循</span> 坐标偏移等错误无反馈通道，直到用户打开 PDF 才发现——而这时文件已经被修改了<br>
+      <span class="ann ann-c2">通用化</span> LLM 无法直接感知操作结果的场景，必须提供<strong>中间态可视化</strong>。原则：不可逆操作前校验，不可见操作后验证
+    </div>
+  </div>
+</div>
+
+<div class="principle">
+  <div class="principle-num">6</div>
+  <div class="principle-body">
+    <div class="principle-title">库缺陷封装 — 对 LLM 透明的补丁</div>
+    <div class="principle-desc">
+      <span class="ann ann-c1">体现</span> fill_fillable_fields.py 的 monkeypatch pypdf（第 74-87 行），修复 /Opt 字段解析返回嵌套列表的 bug<br>
+      <span class="ann ann-c4">不遵循</span> 要么在 Prompt 里解释 pypdf 的 bug（增加 LLM 认知负担，可能被忽略），要么让 LLM 踩坑后报错（用户体验差）<br>
+      <span class="ann ann-c2">通用化</span> 底层库的已知问题应在<strong>脚本层屏蔽</strong>，不让 LLM 感知。LLM 只需要知道"调用这个脚本"，不需要知道"这个脚本里有个补丁"
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:24px;border-color:rgba(52,211,153,0.2)">
+  <div class="card-title" style="color:var(--c2)">
+    <span class="icon" style="background:rgba(52,211,153,0.15);color:var(--c2)">★</span>
+    一句话总结
+  </div>
+  <div style="font-size:14px;color:var(--text);line-height:1.8">
+    PDF skill 的架构 = <strong style="color:var(--c1)">知识分层加载</strong>（三文件 Progressive Disclosure）+ <strong style="color:var(--c3)">流程强制路由</strong>（CRITICAL Decision Tree）+ <strong style="color:var(--c2)">确定性脚本兜底</strong>（Fail-Closed + 验证闭环）。<br><br>
+    这三者构成了一个<strong>不依赖 LLM "自觉性"的安全网</strong>——即使 LLM 跳步、算错坐标、不知道库的 bug，脚本层也能兜住。
+  </div>
+</div>
+
+</div>
+
+<!-- ===================== SECTION 6: 实战框架 ===================== -->
+<div class="section" id="s6">
+
+<div class="section-title">自造 Skill 实战框架</div>
+<div class="section-sub">把 PDF skill 的模式提炼为可直接套用的工程工具箱 — 从"看懂官方"到"自己动手写知识库+工具型 Skill"</div>
+
+<!-- ===== 0: 源码级细节 ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--c3)">0</span> 源码级设计细节 — PDF skill 中值得逐字学习的 5 个片段</div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px">这些片段看起来平淡，但每一个都藏着官方团队的设计意图。如果自己写，大概率不会这么写。</p>
+
+  <!-- Detail 1 -->
+  <div style="padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:10px">
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">① Description 字段的穷举式枚举</div>
+    <div class="src-box" style="font-size:11px">description: Use this skill whenever the user wants to do anything with PDF files.
+This includes reading or extracting text/tables from PDFs, combining or merging
+multiple PDFs into one, splitting PDFs apart, rotating pages, adding watermarks,
+creating new PDFs, filling PDF forms, encrypting/decrypting PDFs, extracting images,
+and OCR on scanned PDFs to make them searchable. If the user mentions a .pdf file
+or asks to produce one, use this skill.</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">【译文】当用户想对 PDF 文件做任何操作时使用此 Skill。包括：读取或提取文本/表格、合并多个 PDF、拆分 PDF、旋转页面、添加水印、创建新 PDF、填写表单、加解密、提取图片、OCR 扫描件。如果用户提到 .pdf 文件或要求生成 PDF，使用此 Skill。</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:6px">
+      <span class="ann ann-c1">结构</span> 第一句 = 超宽 catch-all（"do anything with PDF files"）。
+      第二句 = 具体枚举 11 种操作。
+      第三句 = 文件扩展名兜底（".pdf"）。
+      <div class="why" style="margin-top:6px;margin-bottom:0">
+        <div class="why-label">设计理由</div>
+        Description 是分类器决策边界。官方选择 <strong>recall > precision</strong>——宁可多触发（浪费一次 context），不可漏触发（用户问"帮我合并 PDF"却没有命中）。90+ 词的长度就是为了覆盖足够多的同义表述。
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail 2 -->
+  <div style="padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:10px">
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">② Quick Reference 表格 — 嵌入式路由决策表</div>
+    <div class="src-box" style="font-size:11px">| Task | Best Tool | Command/Code |
+|------|-----------|--------------|
+| Merge PDFs | pypdf | `writer.add_page(page)` |
+| Split PDFs | pypdf | One page per file |
+| Extract text | pdfplumber | `page.extract_text()` |
+| Extract tables | pdfplumber | `page.extract_tables()` |
+| Create PDFs | reportlab | Canvas or Platypus |
+| Command line merge | qpdf | `qpdf --empty --pages ...` |
+| OCR scanned PDFs | pytesseract | Convert to image first |
+| Fill PDF forms | pdf-lib or pypdf (see FORMS.md) | See FORMS.md |</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">【译文】任务 | 最佳工具 | 命令：合并→pypdf / 拆分→pypdf / 提取文本→pdfplumber / 提取表格→pdfplumber / 创建→reportlab / 命令行合并→qpdf / OCR→pytesseract / 填表→见 FORMS.md</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:6px">
+      <span class="ann ann-c1">结构</span> 三列：任务 → 最佳工具 → 一行命令/代码。<strong>最后一行的 "See FORMS.md" 同时是路由指针</strong>。
+      <div class="why" style="margin-top:6px;margin-bottom:0">
+        <div class="why-label">设计理由</div>
+        这不是给人类看的速查表，而是给 LLM 看的<strong>决策压缩器</strong>。表格格式比段落文本更适合 LLM 做精确匹配——"用户要合并" → 扫描第一列 → 命中 "Merge PDFs" → 输出 pypdf + 代码。比让 LLM 从 300 行段落中找到合并的方法快得多。
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail 3 -->
+  <div style="padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:10px">
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">③ IMPORTANT 标注的陷阱 — 一行警告阻止一类 bug</div>
+    <div class="src-box" style="font-size:11px">**IMPORTANT**: Never use Unicode subscript/superscript characters (₀₁₂₃₄₅₆₇₈₉,
+⁰¹²³⁴⁵⁶⁷⁸⁹) in ReportLab PDFs. The built-in fonts do not include these glyphs,
+causing them to render as solid black boxes.
+
+Instead, use ReportLab's XML markup tags in Paragraph objects:
+    chemical = Paragraph("H&lt;sub&gt;2&lt;/sub&gt;O", styles['Normal'])</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">【译文】重要：永远不要在 ReportLab PDF 中使用 Unicode 上下标字符（₀₁₂₃₄₅₆₇₈₉, ⁰¹²³⁴⁵⁶⁷⁸⁹）。内置字体不包含这些字形，会导致它们渲染为黑色方块。应改用 ReportLab 的 XML 标记标签。</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:6px">
+      <span class="ann ann-c1">结构</span> IMPORTANT: [禁令] → [后果] → [替代方案 + 代码]。
+      <div class="why" style="margin-top:6px;margin-bottom:0">
+        <div class="why-label">设计理由</div>
+        这不是一般性建议，而是<strong>特定库的特定 bug 的精确规避</strong>。它被放在 ReportLab 代码片段的正上方而非 FAQ 里——因为"在使用时一定能看到"比"在 FAQ 里能找到"重要得多。设计模式：<strong>陷阱即文档，且必须贴在使用点旁边</strong>。
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail 4 -->
+  <div style="padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:10px">
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">④ Next Steps 路由指针 — 三文件加载的触发器</div>
+    <div class="src-box" style="font-size:11px">## Next Steps
+
+- For advanced pypdfium2 usage, see REFERENCE.md
+- For JavaScript libraries (pdf-lib), see REFERENCE.md
+- If you need to fill out a PDF form, follow the instructions in FORMS.md
+- For troubleshooting guides, see REFERENCE.md</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">【译文】下一步：高级 pypdfium2 用法 → 见 REFERENCE.md / JavaScript 库（pdf-lib）→ 见 REFERENCE.md / 填写 PDF 表单 → 按 FORMS.md 中的说明执行 / 故障排查 → 见 REFERENCE.md</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:6px">
+      <span class="ann ann-c1">结构</span> 四条路由指令，每条指向具体文件 + 具体场景。"follow the instructions in FORMS.md" 的措辞比 "see FORMS.md" 更强——暗示要严格执行而非随意浏览。
+      <div class="why" style="margin-top:6px;margin-bottom:0">
+        <div class="why-label">设计理由</div>
+        这四行是 Progressive Disclosure 的<strong>路由引擎</strong>。它们位于 SKILL.md 最末尾——LLM 读完全部基础内容后才看到路由指针，此时已经知道自己的快速路径是否够用。如果不够，顺着指针走。
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail 5 -->
+  <div style="padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--surface)">
+    <div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">⑤ 脚本错误消息 — 给 LLM 看的诊断信息</div>
+    <div class="src-box" style="font-size:11px"># fill_fillable_fields.py 的错误消息设计
+f'ERROR: Invalid value "{field_value}" for checkbox field "{field_id}".
+The checked value is "{checked_value}" and the unchecked value is "{unchecked_value}"'
+
+f'ERROR: Incorrect page number for `{field_id}`
+(got {field["page"]}, expected {existing_field["page"]})'
+
+# check_bounding_boxes.py 的错误消息
+f'FAILURE: intersection between label and entry bounding boxes for `{description}`
+({ri.rect}, {rj.rect})'
+
+f'FAILURE: entry bounding box height ({entry_height}) for `{description}`
+is too short for the text content (font size: {font_size})'</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px">【译文】错误：复选框字段 "{field_id}" 的值 "{field_value}" 无效。选中值应为 "{checked_value}"，未选中值为 "{unchecked_value}"。 / 错误：字段 "{field_id}" 的页码不正确（传入 {page}，期望 {page}）。 / 失败："{description}" 的标签框和输入框发生重叠。 / 失败："{description}" 的输入框高度 ({height}) 对于字体大小 ({font_size}) 太小。</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7;margin-top:6px">
+      <span class="ann ann-c1">结构</span> ERROR/FAILURE 前缀 + 具体字段名 + 期望值 vs 实际值 + 修复线索。
+      <div class="why" style="margin-top:6px;margin-bottom:0">
+        <div class="why-label">设计理由</div>
+        这些错误消息不是给终端用户看的，而是给 <strong>LLM 看的</strong>。所以它们包含了精确的修复信息——"checked value 是 X，你传了 Y"。LLM 读完错误消息后可以直接修正 field_values.json 并重试。<strong>设计模式：脚本的 stdout 是给 LLM 的反馈通道，不是给人看的日志</strong>。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 1: 反面对照 ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(248,113,113,0.15);color:var(--c4)">1</span> 反面对照 — "如果我写会怎么错"</div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px">假设一个社区贡献者（不了解官方模式）要写 PDF skill，以下是大概率会犯的错误，以及官方设计如何避免它们：</p>
+
+  <div class="vs" style="margin-bottom:12px">
+    <div class="vs-side bad">
+      <div class="vs-label">社区写法</div>
+      <div class="vs-item"><strong>一个大文件</strong>：把所有 PDF 操作（Python + JS + CLI + 表单填充）全部塞进 SKILL.md → 2000+ 行</div>
+      <div class="vs-item"><strong>不写脚本</strong>：让 LLM 自己做坐标转换、字段校验 → LLM 算错 Y 轴方向 → 文字写到页面外</div>
+      <div class="vs-item"><strong>不强制顺序</strong>：表单填充步骤写成"建议顺序" → LLM 跳步 → 走错分支</div>
+      <div class="vs-item"><strong>不验证</strong>：填完 PDF 直接交付 → 坐标偏移用户不打开就发现不了</div>
+      <div class="vs-item"><strong>不修补库 bug</strong>：不知道 pypdf 的 /Opt bug → 某些 choice 字段静默失败</div>
+    </div>
+    <div class="vs-divider">vs</div>
+    <div class="vs-side good">
+      <div class="vs-label">官方解法</div>
+      <div class="vs-item"><strong>三文件分层</strong>：314 行 + 612 行 + 295 行，按需加载，token 预算不浪费</div>
+      <div class="vs-item"><strong>8 个脚本</strong>：坐标转换、字段校验、碰撞检测全封装 → 对 LLM 透明</div>
+      <div class="vs-item"><strong>CRITICAL 指令</strong>："You MUST complete these steps in order" → 遵从率远高于"建议"</div>
+      <div class="vs-item"><strong>双防线验证</strong>：check_bounding_boxes（填前）+ convert_to_images（填后）→ 错误可捕获</div>
+      <div class="vs-item"><strong>monkeypatch</strong>：在 fill_fillable_fields.py 里静默修补 → LLM 无感知</div>
+    </div>
+  </div>
+
+  <div class="quote">
+    <strong style="color:var(--text)">核心洞察</strong>：社区写法本质上是<strong>"信任 LLM 能力"</strong>的思路——假设 LLM 能自己判断、计算、验证。官方写法本质上是<strong>"不信任 LLM 的薄弱环节"</strong>——LLM 擅长的（语义理解、代码生成）让 LLM 做，LLM 不擅长的（空间推理、精确计算、确定性校验）封装成脚本。
+  </div>
+</div>
+
+<!-- ===== 2: 跨 Skill 模式碰撞 ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.15);color:var(--c1)">2</span> 跨 Skill 模式碰撞 — frontend-design vs pdf</div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px">同一个设计问题，两个 Skill 用完全不同的方式解决。理解"为什么不同"比理解"怎么做的"更重要。</p>
+
+  <table class="info-table">
+    <tr><th>设计问题</th><th style="color:var(--c3)">frontend-design 的解法</th><th style="color:var(--c5)">pdf 的解法</th><th style="color:var(--text)">为什么不同</th></tr>
+    <tr>
+      <td style="color:var(--text)">控制 LLM 统计默认倾向</td>
+      <td>NEVER 负面清单 + 二级防御<br><span style="font-size:11px;color:var(--text3)">"不要 AI 味" → 列出 AI 味的具体表现 → 预判模型迁移</span></td>
+      <td>CRITICAL 强制顺序 + 脚本校验<br><span style="font-size:11px;color:var(--text3)">"不要跳步" → 强制执行顺序 → 脚本兜底</span></td>
+      <td>frontend 的倾向是<strong>审美层面</strong>（模型默认生成千篇一律的设计），用约束纠正<br>pdf 的倾向是<strong>行为层面</strong>（模型默认跳步/简化），用流程+脚本纠正</td>
+    </tr>
+    <tr>
+      <td style="color:var(--text)">知识注入方式</td>
+      <td>直接嵌入 Body<br><span style="font-size:11px;color:var(--text3)">43 行全部在 SKILL.md 里</span></td>
+      <td>三文件分层<br><span style="font-size:11px;color:var(--text3)">SKILL.md + reference.md + forms.md</span></td>
+      <td>frontend 的知识量小（审美标准 + 工具箱），单文件放得下<br>pdf 的知识量大（9 个工具 + 完整 API），必须分层管理</td>
+    </tr>
+    <tr>
+      <td style="color:var(--text)">验证手段</td>
+      <td>无自动验证<br><span style="font-size:11px;color:var(--text3)">产出主观 → 只能靠前置约束</span></td>
+      <td>双防线验证闭环<br><span style="font-size:11px;color:var(--text3)">check_bounding_boxes + convert_to_images</span></td>
+      <td>frontend 产出<strong>不可客观验证</strong>（"美不美"没有函数）<br>pdf 操作<strong>可客观验证</strong>（"框体重不重叠"有算法）</td>
+    </tr>
+    <tr>
+      <td style="color:var(--text)">脚本使用</td>
+      <td>零脚本<br><span style="font-size:11px;color:var(--text3)">不需要</span></td>
+      <td>8 个脚本<br><span style="font-size:11px;color:var(--text3)">核心执行层</span></td>
+      <td>frontend 不需要确定性执行——生成代码本身就是最终产出<br>pdf 需要操作二进制文件——LLM 不能直接操作 PDF 内部结构</td>
+    </tr>
+    <tr>
+      <td style="color:var(--text)">写作风格</td>
+      <td>强硬型（NEVER / ALWAYS）<br><span style="font-size:11px;color:var(--text3)">无 eval 兜底 → prompt 是唯一防线</span></td>
+      <td>混合型（CRITICAL + 中性指令）<br><span style="font-size:11px;color:var(--text3)">关键步骤强硬，操作指引中性</span></td>
+      <td>同属写作风格决策框架中的不同象限——取决于产出可验证性和是否有纠正机制</td>
+    </tr>
+  </table>
+
+  <div class="why" style="margin-top:8px">
+    <div class="why-label">设计理由</div>
+    两个 Skill 处于架构光谱的两端，但共享同一条底层逻辑：<strong>控制策略取决于产出的可验证性，而非工具的复杂度</strong>。frontend-design 复杂度低但不可验证 → 全靠约束；pdf 复杂度高但可验证 → 用脚本兜底 + 校验闭环。
+  </div>
+</div>
+
+<!-- ===== 3: 脚本接口契约 ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(167,139,250,0.15);color:var(--c5)">3</span> 脚本接口契约 — Prompt 与代码之间的接口设计规范</div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px">从 PDF skill 提炼的 4 条"脚本接口设计约定"。你在自己写 Skill 时，脚本与 Prompt 之间也需要遵守这些契约：</p>
+
+  <div style="margin-bottom:10px;padding:14px;border-radius:8px;border:1px solid rgba(6,182,212,0.2);background:rgba(6,182,212,0.03)">
+    <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:6px">约定 1：JSON 字段名 = 坐标系信号量</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7">
+      LLM 在 JSON 里写 <code style="color:var(--c1)">"pdf_width": 612</code> 或 <code style="color:var(--c5)">"image_width": 1700</code>，脚本据此自动选择转换函数。<br>
+      <span style="color:var(--text3)">通用化：当同一操作需要兼容多种输入格式时，用字段名做信号量，而非加一个 "coordinate_system" 枚举字段。字段名本身比显式声明更不容易被 LLM 填错。</span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:10px;padding:14px;border-radius:8px;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.03)">
+    <div style="font-size:12px;font-weight:600;color:var(--c2);margin-bottom:6px">约定 2：stdout 是给 LLM 的反馈通道</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7">
+      脚本的 print() 不是日志，是给 LLM 的诊断信息。格式：<code style="color:var(--c4)">ERROR:</code> / <code style="color:var(--c2)">SUCCESS:</code> 前缀 + 具体字段名 + 期望 vs 实际 + 修复线索。<br>
+      <span style="color:var(--text3)">通用化：脚本的所有 stdout 都应该写成 LLM 能直接理解并据此修正的格式。不要写 "Error at line 42"——写 "ERROR: Invalid value 'true' for checkbox 'agree'. Use '/On' to check it."</span>
+    </div>
+  </div>
+
+  <div style="margin-bottom:10px;padding:14px;border-radius:8px;border:1px solid rgba(245,158,11,0.2);background:rgba(245,158,11,0.03)">
+    <div style="font-size:12px;font-weight:600;color:var(--c3);margin-bottom:6px">约定 3：Fail-Closed + 具体诊断</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7">
+      校验失败时 <code style="color:var(--c4)">sys.exit(1)</code>，但退出前打印精确的错误信息（哪个字段、什么问题、怎么修）。<br>
+      <span style="color:var(--text3)">通用化：永远不要让脚本静默失败。LLM 需要明确的错误信号才能重试。exit code 1 = "停下来，修复，重跑"。</span>
+    </div>
+  </div>
+
+  <div style="padding:14px;border-radius:8px;border:1px solid rgba(167,139,250,0.2);background:rgba(167,139,250,0.03)">
+    <div style="font-size:12px;font-weight:600;color:var(--c5);margin-bottom:6px">约定 4：Prompt 是编排器，脚本不关心"为什么"</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.7">
+      forms.md 负责决定"走哪条路径"、"填什么值"。脚本只负责"执行"和"校验"——它不知道也不关心用户为什么要填 "Smith"。<br>
+      <span style="color:var(--text3)">通用化：脚本不应该包含任何业务逻辑判断。如果一个脚本里出现了 if/else 判断"用户想要什么"，说明逻辑放错位置了——应该放在 Prompt 里，脚本只接收结果。</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 4: 知识库型 Skill 写作模板 ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(52,211,153,0.15);color:var(--c2)">4</span> 知识库+工具型 Skill 写作模板</div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px">从 PDF skill 提炼的骨架模板。当你需要构建一个"覆盖多种操作 + 需要领域知识 + 需要脚本执行"的 Skill 时，按此模板组装：</p>
+
+  <div class="diagram">
+    <div style="font-family:var(--font-mono);font-size:12px;line-height:1.8">
+<div style="color:var(--c3)">your-skill/</div>
+<div style="padding-left:20px">
+<div><span style="color:var(--c1)">SKILL.md</span> <span style="color:var(--text3)">← 主入口 · 始终加载</span></div>
+<div style="padding-left:20px;font-size:11px;color:var(--text2);line-height:1.6">
+  ├── Frontmatter: name + <strong>description 穷举触发</strong><br>
+  ├── Overview: 一句话使命 + 快速路径<br>
+  ├── 核心操作代码片段（每个自包含、可直接执行）<br>
+  ├── Quick Reference 表格（任务 → 最佳工具 → 命令）<br>
+  ├── <strong>陷阱/IMPORTANT 警告</strong>（贴在使用点旁边）<br>
+  └── Next Steps → 路由指针（指向 REFERENCE.md / 专项流程文件）<br>
+</div>
+<div style="margin-top:6px"><span style="color:var(--c5)">REFERENCE.md</span> <span style="color:var(--text3)">← 高级参考 · 按需加载</span></div>
+<div style="padding-left:20px;font-size:11px;color:var(--text2);line-height:1.6">
+  ├── 高级/边缘场景的代码片段<br>
+  ├── 性能优化指南<br>
+  └── 故障排查指南<br>
+</div>
+<div style="margin-top:6px"><span style="color:var(--c5)">专项文件.md</span> <span style="color:var(--text3)">← 决策树 · 条件加载（可选）</span></div>
+<div style="padding-left:20px;font-size:11px;color:var(--text2);line-height:1.6">
+  ├── CRITICAL 强制顺序声明<br>
+  ├── Decision Tree（路由 → 分支 → 子分支）<br>
+  └── 每步调用具体脚本 + 产出文件说明<br>
+</div>
+<div style="margin-top:6px;color:var(--c2)">scripts/</div>
+<div style="padding-left:20px;font-size:11px;color:var(--text2);line-height:1.6">
+  ├── 路由脚本（判断走哪条路径）<br>
+  ├── 提取脚本（从输入中抽取结构信息）<br>
+  ├── 执行脚本（写入/修改/生成产出）<br>
+  ├── 校验脚本（填写前检测）<br>
+  └── 验证脚本（填写后确认）<br>
+</div>
+</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px;font-size:12px;color:var(--text2);line-height:1.8">
+    <strong style="color:var(--text)">判断你的 Skill 是否需要这个模板</strong>：如果以下条件满足 <strong>3 个以上</strong>，就应该用知识库+工具型而非纯约束型：
+  </div>
+  <div class="pill-list" style="margin-top:8px">
+    <span class="pill">覆盖 3 种以上操作类型</span>
+    <span class="pill">涉及外部文件格式（PDF/Excel/图片…）</span>
+    <span class="pill">需要精确的坐标/格式计算</span>
+    <span class="pill">输入质量不确定（有多种形态）</span>
+    <span class="pill">产出可被客观验证（有"对错"而非"好坏"）</span>
+    <span class="pill">底层库有已知 bug 需要屏蔽</span>
+  </div>
+</div>
+
+<!-- ===== 5: 需求→模式映射（补充 PDF 视角） ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--c3)">5</span> 需求 → 模式映射表（知识库+工具型视角）</div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:12px">与 frontend-design 的实战框架互补。frontend-design 解决"约束型"需求，这里解决"知识库+工具型"需求：</p>
+  <table class="info-table">
+    <tr><th style="width:28%">你的需求特征</th><th>应该选用的模式</th><th>PDF skill 中的来源</th></tr>
+    <tr>
+      <td>覆盖多种操作类型（>3种）</td>
+      <td><span class="tag tag-c1">三文件分层</span> SKILL.md 速查 + REFERENCE.md 深度 + 专项文件决策树</td>
+      <td>SKILL.md → reference.md → forms.md</td>
+    </tr>
+    <tr>
+      <td>需要操作二进制/结构化文件</td>
+      <td><span class="tag tag-c2">脚本封装</span> LLM 不直接操作文件，通过脚本读写</td>
+      <td>全部 8 个 scripts</td>
+    </tr>
+    <tr>
+      <td>输入有多种形态（可填充/不可填充/扫描件）</td>
+      <td><span class="tag tag-c3">路由脚本 + Decision Tree</span> 先路由再分支</td>
+      <td>check_fillable_fields.py → forms.md 的分支树</td>
+    </tr>
+    <tr>
+      <td>LLM 需要做空间/数学计算</td>
+      <td><span class="tag tag-c4">LLM 标注 + 脚本转换</span> LLM 提供原始信息，脚本做计算</td>
+      <td>pdf_width vs image_width 信号量</td>
+    </tr>
+    <tr>
+      <td>产出修改不可逆文件</td>
+      <td><span class="tag tag-c4">双防线验证</span> 填前校验 + 填后可视化确认</td>
+      <td>check_bounding_boxes + convert_to_images</td>
+    </tr>
+    <tr>
+      <td>底层库有已知缺陷</td>
+      <td><span class="tag tag-c5">monkeypatch 封装</span> 在脚本层屏蔽，对 LLM 透明</td>
+      <td>fill_fillable_fields.py 的 /Opt 补丁</td>
+    </tr>
+    <tr>
+      <td>多步骤流程容易跳步</td>
+      <td><span class="tag tag-c3">CRITICAL 强制顺序</span> + 每步调用具体脚本</td>
+      <td>forms.md 开头的 CRITICAL 声明</td>
+    </tr>
+    <tr>
+      <td>需要覆盖多种工具/库</td>
+      <td><span class="tag tag-c1">Quick Reference 表格</span> 压缩决策为表格格式</td>
+      <td>SKILL.md 的速查表</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ===== 6: 组装实战案例 ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(167,139,250,0.15);color:var(--c5)">6</span> 复合型 Skill 组装案例 — 从 PDF 模式出发</div>
+  <p style="font-size:12px;color:var(--text2);margin-bottom:14px">三个真实业务场景，展示如何把 PDF skill 的模式与其他 Skill 的模式融合：</p>
+
+  <!-- Case A -->
+  <div style="padding:16px;border-radius:var(--r);border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.03);margin-bottom:12px">
+    <div style="font-size:13px;font-weight:600;color:var(--c2);margin-bottom:8px">场景 A：智能合同审核助手</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+      <strong style="color:var(--text)">需求：</strong>用户上传 PDF 合同 → 自动提取条款 → 对照法规检查 → 标记风险点 → 生成审核报告。
+    </div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+      <strong style="color:var(--text)">组装分析：</strong>
+    </div>
+    <div class="layers" style="margin-top:8px">
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label" style="color:var(--c1)">从 PDF skill 借鉴</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          三文件分层（合同模板库 / 法规知识库 / 审核流程 Decision Tree）+ 脚本提取合同结构 + convert_to_images 让 LLM 看到原文排版
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(245,158,11,0.04)">
+        <div class="layer-label" style="color:var(--c3)">从 frontend-design 借鉴</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          审核报告的排版约束（NEVER 用默认配色、结构化呈现而非大段文字）— 报告生成是主观产出，需要前置约束
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(167,139,250,0.04)">
+        <div class="layer-label" style="color:var(--c5)">关键决策</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          合同提取 → 用脚本（确定性：pdfplumber 提取条款坐标）<br>
+          风险判断 → 用 Prompt（主观：需要法律语义理解）<br>
+          报告生成 → 用约束（主观产出 + 无 eval → NEVER 约束）
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case B -->
+  <div style="padding:16px;border-radius:var(--r);border:1px solid rgba(6,182,212,0.2);background:rgba(6,182,212,0.03);margin-bottom:12px">
+    <div style="font-size:13px;font-weight:600;color:var(--c1);margin-bottom:8px">场景 B：多格式数据转换器</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+      <strong style="color:var(--text)">需求：</strong>用户上传 PDF/Excel/CSV/JSON → 自动识别格式 → 转换为目标格式 → 数据校验。
+    </div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+      <strong style="color:var(--text)">组装分析：</strong>
+    </div>
+    <div class="layers" style="margin-top:8px">
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label" style="color:var(--c1)">从 PDF skill 借鉴</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          路由脚本（check_fillable_fields → 改为 detect_format.py）+ Quick Reference 表格（源格式 × 目标格式 → 最佳库）+ Graceful Degradation（格式检测失败 → 回退到扩展名猜测）
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(52,211,153,0.04)">
+        <div class="layer-label" style="color:var(--c2)">独特设计</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          不需要三文件（操作类型多但每种都很简单）→ SKILL.md 内用分节表格覆盖所有组合。脚本只做数据校验（行列数、类型匹配）。
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(167,139,250,0.04)">
+        <div class="layer-label" style="color:var(--c5)">关键决策</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          不需要 CRITICAL 强制顺序（转换是原子操作而非多步流程）。不需要双防线验证（转换结果可以用脚本 100% 校验）。<strong>PDF 的模式不是全部都要用——按需取用</strong>。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Case C -->
+  <div style="padding:16px;border-radius:var(--r);border:1px solid rgba(248,113,113,0.2);background:rgba(248,113,113,0.03)">
+    <div style="font-size:13px;font-weight:600;color:var(--c4);margin-bottom:8px">场景 C：自动化测试生成器</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+      <strong style="color:var(--text)">需求：</strong>读取源码 → 分析函数签名 → 生成单元测试 → 运行测试 → 根据失败结果修正。
+    </div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+      <strong style="color:var(--text)">组装分析：</strong>
+    </div>
+    <div class="layers" style="margin-top:8px">
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label" style="color:var(--c1)">从 PDF skill 借鉴</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          脚本接口契约（stdout 给 LLM 看的错误消息）+ Fail-Closed 校验（测试语法不合法就 exit(1)）
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(52,211,153,0.04)">
+        <div class="layer-label" style="color:var(--c2)">从 skill-creator 借鉴（未来学习）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          Eval 循环（生成 → 运行 → Grader 评分 → 迭代）+ "解释 why" 写作风格（产出可验证 → 温和型）
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(167,139,250,0.04)">
+        <div class="layer-label" style="color:var(--c5)">关键决策</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          产出可验证（测试是否通过 = 客观标准）→ 不需要 NEVER 约束。<br>
+          但需要 CRITICAL 强制顺序（必须先读源码再生成测试）→ 借鉴 forms.md 的流程控制。
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 7: 速查卡 ===== -->
+<div class="card">
+  <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--c3)">7</span> 速查卡：从 PDF skill 提炼的 10 条可复用规则</div>
+  <table class="info-table">
+    <tr><th>#</th><th>规则</th><th>一句话描述</th><th>何时使用</th></tr>
+    <tr><td>1</td><td style="color:var(--text)">Description 穷举 + catch-all</td><td>先列举所有触发场景，再加兜底句式</td><td>所有 Skill</td></tr>
+    <tr><td>2</td><td style="color:var(--text)">Quick Reference 压缩决策</td><td>用表格把"任务→工具→命令"压缩为 LLM 友好格式</td><td>覆盖 3+ 种操作的 Skill</td></tr>
+    <tr><td>3</td><td style="color:var(--text)">三文件渐进加载</td><td>速查手册 → 高级参考 → 专项决策树</td><td>知识量 > 500 行的 Skill</td></tr>
+    <tr><td>4</td><td style="color:var(--text)">CRITICAL 防跳步</td><td>多步骤流程开头加 CRITICAL 强制顺序</td><td>流程型 Skill</td></tr>
+    <tr><td>5</td><td style="color:var(--text)">陷阱贴在使用点旁</td><td>IMPORTANT 警告放在触发代码的正上方</td><td>有已知 bug/陷阱的库</td></tr>
+    <tr><td>6</td><td style="color:var(--text)">LLM 标注 + 脚本转换</td><td>LLM 提供原始信息（字段名做信号量），脚本做计算</td><td>需要数学/坐标/格式转换</td></tr>
+    <tr><td>7</td><td style="color:var(--text)">Fail-Closed + 精确诊断</td><td>校验失败 exit(1)，但输出 LLM 可理解的修复信息</td><td>LLM 产出直接修改文件</td></tr>
+    <tr><td>8</td><td style="color:var(--text)">路由脚本先分流</td><td>4 行代码的路由脚本比 LLM 自己判断可靠</td><td>输入有多种形态</td></tr>
+    <tr><td>9</td><td style="color:var(--text)">高精度优先 + 降级</td><td>先尝试最优方法，失败后 fallback</td><td>输入质量不确定</td></tr>
+    <tr><td>10</td><td style="color:var(--text)">库 bug 静默封装</td><td>在脚本层 monkeypatch，对 LLM 完全透明</td><td>底层库有已知缺陷</td></tr>
+  </table>
+</div>
+
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+function show(i,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s'+i).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

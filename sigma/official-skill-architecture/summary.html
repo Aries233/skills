@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习总结 — Anthropic 官方 Skill 架构设计</title>
+<style>
+:root {
+  --bg: #08080c;
+  --surface: rgba(255,255,255,0.03);
+  --surface-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.06);
+  --text: #ededef;
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-tertiary: rgba(255,255,255,0.3);
+  --accent-1: #06b6d4;
+  --accent-2: #34d399;
+  --accent-gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --green: #34d399;
+  --amber: #fbbf24;
+  --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+  --font-sans: -apple-system, 'Inter', system-ui, sans-serif;
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 10%, rgba(6,182,212,0.06), transparent),
+    radial-gradient(ellipse 500px 500px at 80% 60%, rgba(52,211,153,0.04), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 48px 24px 80px;
+  position: relative;
+  z-index: 1;
+}
+h1 {
+  font-size: 26px;
+  font-weight: 700;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 8px;
+}
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 36px;
+}
+/* 统计网格 */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 36px;
+}
+.stat-card {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  text-align: center;
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+/* 维度区块 */
+.dim-section {
+  margin-bottom: 28px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+}
+.dim-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.dim-badge {
+  display: inline-flex;
+  padding: 2px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  background: rgba(52,211,153,0.12);
+  color: var(--green);
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.dim-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+/* 概念条 */
+.concept {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.concept:last-child { border-bottom: none; }
+.concept-name {
+  flex: 1;
+  font-size: 14px;
+}
+.concept-bar-wrap {
+  width: 80px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.concept-bar {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+}
+.concept-score {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--green);
+  width: 36px;
+  text-align: right;
+}
+/* 关键洞察 */
+.insights {
+  margin-bottom: 28px;
+}
+.insights-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.insight-item {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-left: 3px solid var(--accent-1);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.insight-item strong {
+  color: var(--text);
+}
+/* 误区 */
+.misconception-section {
+  margin-bottom: 28px;
+}
+.mis-header {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.mis-item {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-left: 3px solid var(--amber);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.mis-wrong {
+  color: var(--amber);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.mis-right {
+  color: var(--green);
+}
+/* 下一步 */
+.next-steps {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.next-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.next-item {
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.next-item:last-child { border-bottom: none; }
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>学习总结</h1>
+  <div class="subtitle">Anthropic 官方 Skill 架构设计 · 3 个维度 · 12 个学习项</div>
+
+  <!-- 统计 -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-value">12/12</div>
+      <div class="stat-label">已掌握学习项</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">3/3</div>
+      <div class="stat-label">已完成维度</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">2</div>
+      <div class="stat-label">纠正的认知误区</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value">~82%</div>
+      <div class="stat-label">平均掌握分数</div>
+    </div>
+  </div>
+
+  <!-- 维度一 -->
+  <div class="dim-section">
+    <div class="dim-title">维度一：官方架构解剖学 <span class="dim-badge">已完成</span></div>
+    <div class="dim-subtitle">SKILL.md 如何进行职责分离？如何通过约束避免 AI 味？</div>
+    <div class="concept">
+      <span class="concept-name">Progressive Disclosure（渐进式披露）</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:85%"></div></div>
+      <span class="concept-score">85%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">Output Verifiability 与控制策略</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:85%"></div></div>
+      <span class="concept-score">85%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">Negative Constraint Pattern</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:80%"></div></div>
+      <span class="concept-score">80%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">写作风格（大写红线 vs. 解释原因）</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:80%"></div></div>
+      <span class="concept-score">80%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">Body 组织方式（工作流 vs. 知识类别）</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:85%"></div></div>
+      <span class="concept-score">85%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">Description 触发与优化</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:80%"></div></div>
+      <span class="concept-score">80%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">多领域 Reference 架构</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:80%"></div></div>
+      <span class="concept-score">80%</span>
+    </div>
+  </div>
+
+  <!-- 维度二 -->
+  <div class="dim-section">
+    <div class="dim-title">维度二：静态知识与动态工具的边界 <span class="dim-badge">已完成</span></div>
+    <div class="dim-subtitle">哪些逻辑写在 Prompt 里，哪些下放给脚本？</div>
+    <div class="concept">
+      <span class="concept-name">Prompt vs. Code 边界法则</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:85%"></div></div>
+      <span class="concept-score">85%</span>
+    </div>
+  </div>
+
+  <!-- 维度三 -->
+  <div class="dim-section">
+    <div class="dim-title">维度三：生产级防御与边界控制 <span class="dim-badge">已完成</span></div>
+    <div class="dim-subtitle">如何处理 Edge Cases？如何确保安全审计和容错？</div>
+    <div class="concept">
+      <span class="concept-name">Context Window 溢出防御（四层递进）</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:85%"></div></div>
+      <span class="concept-score">85%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">跨环境适配策略</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:80%"></div></div>
+      <span class="concept-score">80%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">错误处理与容错（Fail-Closed）</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:80%"></div></div>
+      <span class="concept-score">80%</span>
+    </div>
+    <div class="concept">
+      <span class="concept-name">安全审计边界（策略层 + 实施层）</span>
+      <div class="concept-bar-wrap"><div class="concept-bar" style="width:80%"></div></div>
+      <span class="concept-score">80%</span>
+    </div>
+  </div>
+
+  <!-- 核心洞察 -->
+  <div class="insights">
+    <div class="insights-title">核心洞察</div>
+    <div class="insight-item">
+      <strong>产出可验证性是架构决策的元变量。</strong>它决定了用前置约束还是校验循环、用大写红线还是解释原因、Body 按工作流还是知识类别组织。
+    </div>
+    <div class="insight-item">
+      <strong>Prompt vs. Code 的判断法则：</strong>确定性过程 → scripts（黑盒调用）；需理解/组合的知识模式 → SKILL.md/references。首要考量是 Context Window 预算。
+    </div>
+    <div class="insight-item">
+      <strong>负面约束是主观产出的核心武器。</strong>"NEVER 用 Inter/Roboto"比"请用好看的字体"有效，因为它对抗的是模型的统计默认倾向。
+    </div>
+    <div class="insight-item">
+      <strong>Context Window 防御是四层递进体系：</strong>结构预防 → 路由过滤 → 指针分流 → 行为劝阻，覆盖内容从设计到执行的全生命周期。
+    </div>
+    <div class="insight-item">
+      <strong>Fail-Closed 是容错的基石。</strong>Grader 不仅验证预设 assertion，还主动提取隐性声明并反向审查 eval 本身的质量。
+    </div>
+  </div>
+
+  <!-- 纠正的误区 -->
+  <div class="misconception-section">
+    <div class="mis-header">纠正的认知误区</div>
+    <div class="mis-item">
+      <span class="mis-wrong">"控制策略取决于模型能力"</span>
+      → <span class="mis-right">取决于产出可验证性（同一团队对同一模型用不同策略）</span>
+    </div>
+    <div class="mis-item">
+      <span class="mis-wrong">"明确规则用大写红线"</span>
+      → <span class="mis-right">主观产出无后验手段时用大写红线，对抗统计默认倾向</span>
+    </div>
+  </div>
+
+  <!-- 下一步建议 -->
+  <div class="next-steps">
+    <div class="next-title">下一步建议</div>
+    <div class="next-item">1. 实践：选择一个你真实业务场景中的 Skill，用本会话学到的架构法则从零设计一个 SKILL.md</div>
+    <div class="next-item">2. 对比：用 skill-creator 的 eval 流程测试你的 Skill，体验 Grader + Benchmark 的闭环</div>
+    <div class="next-item">3. 融合：将社区 Markdown 隐式状态机的灵活性与官方工程严谨性结合，设计复合型 Skill</div>
+    <div class="next-item">4. 深挖：研究 run_loop.py 的自动 Description 优化实现，理解 train/test split 如何防止过拟合</div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anthropic Skills 架构设计全景图</title>
+<style>
+:root{--bg:#08080c;--surface:rgba(255,255,255,0.03);--surface2:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.06);--text:#ededef;--text2:rgba(255,255,255,0.55);--text3:rgba(255,255,255,0.3);--c1:#06b6d4;--c2:#34d399;--c3:#f59e0b;--c4:#f87171;--grad:linear-gradient(135deg,var(--c1),var(--c2));--font-mono:'SF Mono','Fira Code','JetBrains Mono',monospace;--font-sans:-apple-system,'Inter',system-ui,sans-serif;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 700px 500px at 15% 8%,rgba(6,182,212,0.05),transparent),radial-gradient(ellipse 500px 500px at 85% 55%,rgba(52,211,153,0.04),transparent);pointer-events:none;z-index:0}
+.wrap{max-width:860px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+
+/* Nav */
+.nav{display:flex;gap:6px;margin-bottom:32px;flex-wrap:wrap}
+.nav-btn{padding:7px 16px;border-radius:100px;font-size:12px;font-weight:500;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:var(--c1)}
+
+/* Sections */
+.section{display:none}
+.section.active{display:block}
+.section-title{font-size:22px;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.section-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;backdrop-filter:blur(12px)}
+.card-title{font-size:15px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .icon{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+
+/* Diagram blocks */
+.diagram{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:12px 0;overflow-x:auto}
+
+/* Flow box */
+.flow{display:flex;align-items:stretch;gap:0;margin:16px 0;flex-wrap:wrap}
+.flow-step{flex:1;min-width:120px;padding:14px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);text-align:center;position:relative}
+.flow-step .step-num{font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-bottom:4px}
+.flow-step .step-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.flow-step .step-desc{font-size:11px;color:var(--text2);line-height:1.5}
+.flow-arrow{display:flex;align-items:center;color:var(--text3);font-size:18px;padding:0 4px;flex-shrink:0}
+
+/* Layered boxes */
+.layers{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.layer{padding:16px 20px;border:1px solid var(--border);position:relative}
+.layer:first-child{border-radius:var(--r) var(--r) 0 0}
+.layer:last-child{border-radius:0 0 var(--r) var(--r)}
+.layer .layer-label{font-size:11px;font-family:var(--font-mono);color:var(--text3);margin-bottom:4px}
+.layer .layer-content{font-size:13px}
+
+/* Decision tree */
+.decision{margin:12px 0}
+.decision-node{padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:8px;cursor:pointer;transition:all .2s;position:relative}
+.decision-node:hover{border-color:rgba(255,255,255,0.15);background:var(--surface2)}
+.decision-node .q{font-size:13px;font-weight:500;margin-bottom:4px}
+.decision-node .hint{font-size:11px;color:var(--text3)}
+.decision-children{margin-left:24px;border-left:2px solid var(--border);padding-left:16px;display:none}
+.decision-children.open{display:block}
+.decision-leaf{padding:10px 14px;border-radius:8px;margin-bottom:6px;font-size:12px;line-height:1.6}
+.decision-leaf.yes{background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2)}
+.decision-leaf.no{background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2)}
+
+/* Tag */
+.tag{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--font-mono);letter-spacing:0.3px}
+.tag-c1{background:rgba(6,182,212,0.12);color:var(--c1)}
+.tag-c2{background:rgba(52,211,153,0.12);color:var(--c2)}
+.tag-c3{background:rgba(245,158,11,0.12);color:var(--c3)}
+.tag-c4{background:rgba(248,113,113,0.12);color:var(--c4)}
+
+/* Table */
+.info-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.info-table th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--c1);font-weight:600;font-size:11px}
+.info-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2);vertical-align:top}
+.info-table tr:hover td{color:var(--text)}
+
+/* Quote */
+.quote{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;padding:10px 14px;margin:10px 0;font-size:12px;color:var(--text2);font-style:italic}
+
+/* Grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.flow{flex-direction:column}.flow-arrow{transform:rotate(90deg);justify-content:center;padding:4px 0}}
+
+/* Compare */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:12px 0;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.compare-side{padding:16px}
+.compare-side:first-child{border-right:1px solid var(--border)}
+.compare-label{font-size:11px;font-weight:600;margin-bottom:8px;font-family:var(--font-mono)}
+.compare-item{font-size:12px;color:var(--text2);margin-bottom:6px;line-height:1.5}
+
+/* Pipeline vis */
+.pipeline{display:flex;align-items:center;margin:16px 0;flex-wrap:wrap;gap:4px}
+.pipe-node{padding:8px 14px;border-radius:6px;font-size:11px;font-weight:500;white-space:nowrap}
+.pipe-arrow{color:var(--text3);font-size:14px}
+
+/* Collapsible */
+.collapsible-header{display:flex;align-items:center;gap:8px;padding:12px 16px;cursor:pointer;border-radius:8px;border:1px solid var(--border);background:var(--surface);margin-bottom:4px;transition:all .2s;user-select:none}
+.collapsible-header:hover{background:var(--surface2)}
+.collapsible-header .chevron{transition:transform .2s;color:var(--text3);width:16px;height:16px}
+.collapsible-header.open .chevron{transform:rotate(90deg)}
+.collapsible-body{max-height:0;overflow:hidden;transition:max-height .3s;padding:0 16px}
+.collapsible-body.open{max-height:3000px;padding:0 16px 12px}
+
+/* Highlight text */
+.hl{color:var(--c1);font-weight:500}
+.hl2{color:var(--c2);font-weight:500}
+.hl3{color:var(--c3);font-weight:500}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- Nav -->
+<div class="nav">
+  <button class="nav-btn active" onclick="show('overview')">总览</button>
+  <button class="nav-btn" onclick="show('anatomy')">解剖结构</button>
+  <button class="nav-btn" onclick="show('strategy')">控制策略</button>
+  <button class="nav-btn" onclick="show('boundary')">Prompt vs Code</button>
+  <button class="nav-btn" onclick="show('defense')">防御体系</button>
+  <button class="nav-btn" onclick="show('decision')">决策速查</button>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION: 总览 -->
+<!-- ══════════════════════════════════════ -->
+<div id="overview" class="section active">
+<div class="section-title">总览：一个 Skill 的完整生命周期</div>
+<div class="section-sub">从用户输入到 Claude 产出——Skill 在其中扮演什么角色？</div>
+
+<div class="card">
+<div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.15);color:var(--c1)">1</span>触发阶段：Description 如何当守门员</div>
+<p style="font-size:13px;color:var(--text2)">用户的输入到达 Claude → Claude 查看所有可用 Skill 的 <span class="hl">name + description</span>（Metadata 层，始终在上下文中）→ 判断是否需要加载某个 Skill。</p>
+<div class="diagram">
+<div class="pipeline">
+  <div class="pipe-node" style="background:rgba(255,255,255,0.06);color:var(--text2)">用户输入</div>
+  <span class="pipe-arrow">→</span>
+  <div class="pipe-node" style="background:rgba(6,182,212,0.1);color:var(--c1);border:1px solid rgba(6,182,212,0.2)">Claude 扫描所有 description</div>
+  <span class="pipe-arrow">→</span>
+  <div class="pipe-node" style="background:rgba(52,211,153,0.1);color:var(--c2);border:1px solid rgba(52,211,153,0.2)">匹配 → 加载 SKILL.md body</div>
+  <span class="pipe-arrow">→</span>
+  <div class="pipe-node" style="background:rgba(245,158,11,0.1);color:var(--c3);border:1px solid rgba(245,158,11,0.2)">按需读取 references/scripts</div>
+  <span class="pipe-arrow">→</span>
+  <div class="pipe-node" style="background:rgba(255,255,255,0.06);color:var(--text2)">产出</div>
+</div>
+</div>
+<div class="quote">Description 是分类器的决策边界。Claude 天然倾向 undertrigger，所以 description 要写得"pushy"——主动列举同义词和关联场景。</div>
+</div>
+
+<div class="card">
+<div class="card-title"><span class="icon" style="background:rgba(52,211,153,0.15);color:var(--c2)">2</span>加载阶段：Progressive Disclosure 三层体系</div>
+<p style="font-size:13px;color:var(--text2);margin-bottom:12px">内容按需逐层加载，控制 Context Window 消耗：</p>
+<div class="layers">
+  <div class="layer" style="background:rgba(6,182,212,0.04)">
+    <div class="layer-label">第一层 · 始终加载 · ~100 words</div>
+    <div class="layer-content"><strong>Metadata</strong>：YAML frontmatter 中的 <span class="hl">name</span> + <span class="hl">description</span>。每次对话都在上下文中，是触发的唯一依据。</div>
+  </div>
+  <div class="layer" style="background:rgba(52,211,153,0.04)">
+    <div class="layer-label">第二层 · 触发时加载 · &lt;500 行</div>
+    <div class="layer-content"><strong>SKILL.md body</strong>：Markdown 格式的完整指令。包含工作流程、约束规则、知识模式。是 Skill 的核心价值。</div>
+  </div>
+  <div class="layer" style="background:rgba(245,158,11,0.04)">
+    <div class="layer-label">第三层 · 按需加载 · 无限制</div>
+    <div class="layer-content"><strong>Bundled resources</strong>：references/ 下的文档、scripts/ 下的脚本、assets/ 下的模板。Scripts 可在不加载源码的情况下直接执行。</div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--c3)">3</span>产出阶段：控制策略如何决定 Skill 设计</div>
+<div class="grid2">
+  <div style="padding:14px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.1);border-radius:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--c2);margin-bottom:6px">前置约束型 Skill</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6">
+      适用：<span class="hl2">主观产出</span>（设计、写作）<br>
+      策略：在编码前<strong>收窄审美空间</strong><br>
+      手段：大写红线 + 负面清单<br>
+      示例：frontend-design（43行）
+    </div>
+  </div>
+  <div style="padding:14px;background:rgba(6,182,212,0.04);border:1px solid rgba(6,182,212,0.1);border-radius:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:6px">校验循环型 Skill</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6">
+      适用：<span class="hl">可客观验证产出</span>（代码、数据）<br>
+      策略：<strong>测试 → 打分 → 迭代</strong><br>
+      手段：Grader + Benchmark + 人工审查<br>
+      示例：skill-creator（485行）
+    </div>
+  </div>
+</div>
+<div class="quote">判断标准只有一个：你能不能写出一个机械的 assertion 来判断输出是否正确？</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION: 解剖结构 -->
+<!-- ══════════════════════════════════════ -->
+<div id="anatomy" class="section">
+<div class="section-title">SKILL.md 解剖结构</div>
+<div class="section-sub">一个 Skill 的标准文件结构与每个部分的职责</div>
+
+<div class="card">
+<div class="card-title">标准目录结构</div>
+<div class="diagram" style="font-family:var(--font-mono);font-size:12px;color:var(--text2);line-height:1.8">
+<pre style="color:var(--text2)">
+<span style="color:var(--c1)">skill-name/</span>
+├── <span style="color:var(--c2)">SKILL.md</span>          ← 必须。YAML frontmatter + Markdown 指令
+│   ├── YAML Frontmatter    → 触发机制（name + description）
+│   └── Markdown Body       → 核心指令（工作流 / 知识库）
+│
+├── <span style="color:var(--c3)">scripts/</span>          ← 可选。确定性执行的自动化脚本
+│   └── *.py / *.sh         → Claude 当黑盒调用，不读源码
+│
+├── <span style="color:var(--c1)">references/</span>       ← 可选。按需加载的知识文档
+│   ├── aws.md              → 多领域变体文件
+│   ├── gcp.md              → Claude 只读匹配的那一个
+│   └── azure.md
+│
+└── <span style="color:var(--text3)">assets/</span>           ← 可选。模板、图标、字体等静态资源
+</pre>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">YAML Frontmatter 字段详解</div>
+<div class="diagram" style="font-size:12px">
+<pre style="color:var(--text2);line-height:1.7"><span style="color:var(--c3)">---</span>
+<span style="color:var(--c1)">name</span>: skill-name                    <span style="color:var(--text3)">← Skill 标识符</span>
+<span style="color:var(--c1)">description</span>: &gt;                      <span style="color:var(--text3)">← 【核心】触发决策的唯一依据</span>
+  What the skill does AND when to use it.
+  <span style="color:var(--c2)">Make it "pushy" — 列举所有触发场景的同义词。</span>
+  即使没有明确提到关键词，相关场景也应触发。
+<span style="color:var(--c1)">license</span>: Complete terms in LICENSE.txt <span style="color:var(--text3)">← 许可声明</span>
+<span style="color:var(--c3)">---</span></pre>
+</div>
+<div class="quote">description 是整个 Skill 的"守门员"。写得太窄 → undertrigger（该触发时不触发）；写得太宽 → 误触发。官方用 train/test split + 自动迭代来优化这个字段。</div>
+</div>
+
+<div class="card">
+<div class="card-title">Body 组织方式：两种模式</div>
+<div class="compare">
+  <div class="compare-side" style="background:rgba(6,182,212,0.03)">
+    <div class="compare-label" style="color:var(--c1)">工作流模式</div>
+    <div class="compare-item"><strong>适用：</strong>用户任务有明确的"从 A 到 B"流程</div>
+    <div class="compare-item"><strong>Body 是：</strong>指令序列</div>
+    <div class="compare-item"><strong>示例：</strong>skill-creator、mcp-builder</div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text3);font-family:var(--font-mono);line-height:1.6">
+      ## Capture Intent<br>
+      ## Interview & Research<br>
+      ## Write the SKILL.md<br>
+      ## Run & Evaluate<br>
+      ## Improve the Skill
+    </div>
+  </div>
+  <div class="compare-side" style="background:rgba(52,211,153,0.03)">
+    <div class="compare-label" style="color:var(--c2)">知识库模式</div>
+    <div class="compare-item"><strong>适用：</strong>用户每次需要不同的能力组合</div>
+    <div class="compare-item"><strong>Body 是：</strong>参考手册</div>
+    <div class="compare-item"><strong>示例：</strong>pdf、claude-api</div>
+    <div style="margin-top:8px;font-size:11px;color:var(--text3);font-family:var(--font-mono);line-height:1.6">
+      ## Python Libraries<br>
+      ### pypdf<br>
+      ### pdfplumber<br>
+      ## Command-Line Tools<br>
+      ## Common Tasks<br>
+      ## Quick Reference Table
+    </div>
+  </div>
+</div>
+<p style="font-size:12px;color:var(--text3);margin-top:8px">规则：同一个 Skill 不应混用两种模式。如果既有强流程又有大量知识，把知识下沉到 references/。</p>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION: 控制策略 -->
+<!-- ══════════════════════════════════════ -->
+<div id="strategy" class="section">
+<div class="section-title">控制策略选择</div>
+<div class="section-sub">核心元变量：产出可验证性（Output Verifiability）</div>
+
+<div class="card">
+<div class="card-title">决策流程图</div>
+<div class="diagram">
+<div class="flow" style="flex-direction:column;align-items:stretch">
+  <div class="flow-step" style="background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2);text-align:left">
+    <div class="step-num" style="color:var(--c3)">START</div>
+    <div class="step-title" style="color:var(--c3)">你的 Skill 产出物是什么性质？</div>
+    <div class="step-desc">能否写出一个机械的 assertion 来判断输出正确与否？</div>
+  </div>
+  <div style="text-align:center;padding:6px 0;color:var(--text3)">▼</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="flow-step" style="background:rgba(52,211,153,0.04);border-color:rgba(52,211,153,0.15)">
+      <div class="step-num" style="color:var(--c2)">YES — 可客观验证</div>
+      <div class="step-title">校验循环型</div>
+      <div class="step-desc">
+        <strong>投资校验基础设施：</strong><br>
+        • Assertion 设计（机械判定）<br>
+        • Grader subagent（打分）<br>
+        • Benchmark 聚合（量化对比）<br>
+        • Eval viewer（人工审查）<br>
+        • 迭代改进循环<br><br>
+        <span class="tag tag-c2">例：skill-creator、pdf</span>
+      </div>
+    </div>
+    <div class="flow-step" style="background:rgba(6,182,212,0.04);border-color:rgba(6,182,212,0.15)">
+      <div class="step-num" style="color:var(--c1)">NO — 主观产出</div>
+      <div class="step-title">前置约束型</div>
+      <div class="step-desc">
+        <strong>投资编码前的约束声明：</strong><br>
+        • 审美方向锁定（BOLD/最小）<br>
+        • 负面清单（NEVER 用 X）<br>
+        • 大写红线（CRITICAL/IMPORTANT）<br>
+        • 正面品质要求<br><br>
+        <span class="tag tag-c1">例：frontend-design</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">写作风格选择：解释 why vs. 大写红线</div>
+<p style="font-size:12px;color:var(--text2);margin-bottom:12px">同样由产出可验证性决定。主观产出需要更强的前置信号来对抗模型的统计默认倾向。</p>
+<div class="compare">
+  <div class="compare-side" style="background:rgba(52,211,153,0.03)">
+    <div class="compare-label" style="color:var(--c2)">软性风格 · "解释 why"</div>
+    <div class="compare-item"><strong>何时用：</strong>产出可客观验证</div>
+    <div class="compare-item"><strong>逻辑：</strong>错了能被检测到，所以前置约束可以温和</div>
+    <div class="compare-item"><strong>优势：</strong>Claude 能内化原理并泛化</div>
+    <div class="compare-item" style="color:var(--c2)">Keep SKILL.md under 500 lines ← 平铺直叙即可</div>
+  </div>
+  <div class="compare-side" style="background:rgba(248,113,113,0.03)">
+    <div class="compare-label" style="color:var(--c4)">硬性红线 · CRITICAL / NEVER</div>
+    <div class="compare-item"><strong>何时用：</strong>产出主观、无法后验</div>
+    <div class="compare-item"><strong>逻辑：</strong>模型有统计默认倾向（如 AI slop），温和指令无法打破</div>
+    <div class="compare-item"><strong>本质：</strong>用认知冲击对抗强先验</div>
+    <div class="compare-item" style="color:var(--c4)">NEVER use Inter, Roboto, Arial ← 必须大写</div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">负面约束模式（Negative Constraint Pattern）</div>
+<p style="font-size:13px;color:var(--text2);margin-bottom:10px">当"好产出"无法定义时，退而定义"什么是坏的产出"：</p>
+<div class="diagram" style="font-size:12px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div>
+    <div style="color:var(--c4);font-weight:600;margin-bottom:6px;font-size:11px">反面示例 — 正面规定（不可行）</div>
+    <div style="color:var(--text2);line-height:1.6">"请使用好看的字体"<br>"请设计有特色的页面"<br>"请保持高审美水准"</div>
+    <div style="color:var(--c4);font-size:11px;margin-top:6px">→ 过于抽象，模型仍会回到默认模式</div>
+  </div>
+  <div>
+    <div style="color:var(--c2);font-weight:600;margin-bottom:6px;font-size:11px">正面示例 — 负面清单（有效）</div>
+    <div style="color:var(--text2);line-height:1.6">"NEVER 用 Inter、Roboto、Arial"<br>"NEVER 用紫色渐变 + 白色背景"<br>"NEVER 多次生成收敛到相同选择"</div>
+    <div style="color:var(--c2);font-size:11px;margin-top:6px">→ 精确列举已知的失效模式</div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION: Prompt vs Code -->
+<!-- ══════════════════════════════════════ -->
+<div id="boundary" class="section">
+<div class="section-title">Prompt vs. Code 边界</div>
+<div class="section-sub">什么写在 SKILL.md 里，什么封装成脚本？三层判断法则。</div>
+
+<div class="card">
+<div class="card-title">三层判断法则</div>
+<div class="flow">
+  <div class="flow-step" style="flex:1.2;background:rgba(248,113,113,0.04);border-color:rgba(248,113,113,0.15)">
+    <div class="step-num" style="color:var(--c4)">法则 1</div>
+    <div class="step-title">Context Window 预算优先</div>
+    <div class="step-desc">SKILL.md 有 500 行硬约束。每行每次触发都消耗 token。超出 → 分层/分流。</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" style="flex:1.2;background:rgba(52,211,153,0.04);border-color:rgba(52,211,153,0.15)">
+    <div class="step-num" style="color:var(--c2)">法则 2</div>
+    <div class="step-title">确定性过程 → scripts/</div>
+    <div class="step-desc">不需要 LLM 理解内部逻辑。Claude 只需知道"何时调、传什么参数"。黑盒调用。</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step" style="flex:1.2;background:rgba(6,182,212,0.04);border-color:rgba(6,182,212,0.15)">
+    <div class="step-num" style="color:var(--c1)">法则 3</div>
+    <div class="step-title">知识模式 → SKILL.md / refs</div>
+    <div class="step-desc">需要 LLM 理解后灵活组合。Claude 需挑选、修改、拼接多个片段来应对具体需求。</div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">源码对照：两种代码在 Skill 中的不同角色</div>
+<div class="compare">
+  <div class="compare-side" style="background:rgba(52,211,153,0.03)">
+    <div class="compare-label" style="color:var(--c2)">scripts/ 里的代码 — 确定性执行</div>
+    <div class="compare-item"><strong>文件：</strong>webapp-testing/scripts/with_server.py</div>
+    <div class="compare-item"><strong>Claude 的角色：</strong>黑盒调用者</div>
+    <div class="compare-item"><strong>调用方式：</strong><code style="font-size:11px;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:3px">python scripts/with_server.py --server "npm run dev"</code></div>
+    <div class="compare-item"><strong>官方指令：</strong><span style="color:var(--c4)">"DO NOT read the source"</span></div>
+    <div class="compare-item" style="color:var(--c2)">→ 不需要 Claude 修改哪怕一行</div>
+  </div>
+  <div class="compare-side" style="background:rgba(6,182,212,0.03)">
+    <div class="compare-label" style="color:var(--c1)">SKILL.md 里的代码 — 知识模式</div>
+    <div class="compare-item"><strong>文件：</strong>pdf/SKILL.md 内嵌的 pypdf 代码片段</div>
+    <div class="compare-item"><strong>Claude 的角色：</strong>理解、挑选、组合、修改</div>
+    <div class="compare-item"><strong>使用方式：</strong>从多个片段中选取需要的，组合改参数</div>
+    <div class="compare-item"><strong>如：</strong>pdfplumber 提取表格 + pandas 转 DataFrame + to_excel 导出</div>
+    <div class="compare-item" style="color:var(--c1)">→ 每次用户需求不同，组合方式不同</div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">Reference 文件架构：什么时候用什么结构</div>
+<div class="grid2">
+  <div style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--c3);margin-bottom:6px">独立目录模式</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;font-family:var(--font-mono)">
+      claude-api/<br>
+      ├── python/<br>
+      ├── typescript/<br>
+      ├── go/<br>
+      ├── ... (8 语言)<br>
+      └── shared/
+    </div>
+    <div style="font-size:11px;color:var(--c3);margin-top:6px">变体多(8) × 内容量大(每语言多文件)</div>
+  </div>
+  <div style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:6px">reference/ 平铺模式</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6;font-family:var(--font-mono)">
+      mcp-builder/<br>
+      └── reference/<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── mcp_best_practices.md<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── node_mcp_server.md<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;├── python_mcp_server.md<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;└── evaluation.md
+    </div>
+    <div style="font-size:11px;color:var(--c1);margin-top:6px">变体少(2) × 内容量小(每语言单文件)</div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION: 防御体系 -->
+<!-- ══════════════════════════════════════ -->
+<div id="defense" class="section">
+<div class="section-title">生产级防御体系</div>
+<div class="section-sub">Context Window 防御 + 容错机制 + 安全审计</div>
+
+<div class="card">
+<div class="card-title">Context Window 溢出：四层递进防御</div>
+<p style="font-size:12px;color:var(--text2);margin-bottom:12px">覆盖内容从 设计 → 加载 → 按需读取 → 执行 的全生命周期：</p>
+<div class="diagram">
+<div class="layers">
+  <div class="layer" style="background:rgba(6,182,212,0.04)">
+    <div class="layer-label">第 1 层 · 结构预防 — 设计阶段</div>
+    <div class="layer-content">
+      <strong>500 行硬约束 + 目录分离。</strong><br>
+      防御：Skill 作者把内容写太多。<br>
+      <span style="font-size:11px;color:var(--text3)">示例：SKILL.md 保持 <500 行；reference 文件 >300 行时加目录</span>
+    </div>
+  </div>
+  <div class="layer" style="background:rgba(52,211,153,0.04)">
+    <div class="layer-label">第 2 层 · 路由过滤 — 加载阶段</div>
+    <div class="layer-content">
+      <strong>语言/项目文件探测，只加载匹配的变体。</strong><br>
+      防御：Claude 把 8 种语言的文档全加载到上下文。<br>
+      <span style="font-size:11px;color:var(--text3)">示例：claude-api 检测 *.py → 只读 python/；检测 package.json → 只读 typescript/</span>
+    </div>
+  </div>
+  <div class="layer" style="background:rgba(245,158,11,0.04)">
+    <div class="layer-label">第 3 层 · 指针分流 — 按需阶段</div>
+    <div class="layer-content">
+      <strong>"See REFERENCE.md" 替代内嵌内容。</strong><br>
+      防御：低频内容每次触发都占用 Context。<br>
+      <span style="font-size:11px;color:var(--text3)">示例：pdf/SKILL.md 只放 Quick Start，高级功能指向 reference.md 和 forms.md</span>
+    </div>
+  </div>
+  <div class="layer" style="background:rgba(248,113,113,0.04)">
+    <div class="layer-label">第 4 层 · 行为劝阻 — 执行阶段</div>
+    <div class="layer-content">
+      <strong>"DO NOT read the source"。</strong><br>
+      防御：Claude 执行时出于好奇去读大文件源码。<br>
+      <span style="font-size:11px;color:var(--text3)">示例：webapp-testing 的 with_server.py 被当作黑盒，Claude 只用 --help 查看用法</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">容错机制：Fail-Closed + 深度验证</div>
+<div class="grid2">
+  <div style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--c4);margin-bottom:6px">Fail-Closed 原则</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6">
+      <strong>存疑时，举证责任在通过方。</strong><br><br>
+      "误杀"（正确输出标为失败）→ 最多多改一轮<br>
+      "放过"（错误输出标为通过）→ 带虚假信心发布<br><br>
+      <span style="color:var(--c2)">宁可误杀，绝不放过。</span>
+    </div>
+  </div>
+  <div style="padding:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+    <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:6px">Grader 深度验证</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.6">
+      <strong>超出预设 assertion 的深度防御：</strong><br><br>
+      ① 主动提取<strong>隐性声明</strong>并独立验证<br>
+      ② 反向审查<strong> assertion 本身</strong>是否太弱<br>
+      ③ 检查通过是否仅因巧合而非真正完成<br><br>
+      <span style="color:var(--c1)">三 subagent 协作：Grader + Analyzer + Comparator</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">安全审计：策略 + 实施双层防御</div>
+<div class="flow">
+  <div class="flow-step" style="background:rgba(245,158,11,0.04);border-color:rgba(245,158,11,0.15)">
+    <div class="step-num" style="color:var(--c3)">策略层</div>
+    <div class="step-title">Principle of Lack of Surprise</div>
+    <div class="step-desc">信任边界守卫。Skill 内容不应让用户意外。禁止恶意 Skill 设计。</div>
+  </div>
+  <div class="flow-arrow">+</div>
+  <div class="flow-step" style="background:rgba(6,182,212,0.04);border-color:rgba(6,182,212,0.15)">
+    <div class="step-num" style="color:var(--c1)">实施层</div>
+    <div class="step-title">Provider Marker 扫描</div>
+    <div class="step-desc">作用域边界守卫。检测 import openai 等标记，防止在非 Anthropic 项目上动手。</div>
+  </div>
+  <div class="flow-arrow">=</div>
+  <div class="flow-step" style="background:rgba(52,211,153,0.04);border-color:rgba(52,211,153,0.15)">
+    <div class="step-num" style="color:var(--c2)">效果</div>
+    <div class="step-title">覆盖已知 + 未知威胁</div>
+    <div class="step-desc">原则覆盖新型威胁，检查覆盖已知模式。单独任何一个都不够。</div>
+  </div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">跨环境适配：单文件多环境策略</div>
+<p style="font-size:12px;color:var(--text2);margin-bottom:10px">三种运行环境共享 90% 核心逻辑，差异点叠加在独立段落：</p>
+<div class="diagram" style="font-size:12px">
+<pre style="color:var(--text2);line-height:1.7">
+<span style="color:var(--c2)">## 核心工作流（所有环境共享）</span>     ← 90% 内容，写一次
+├── Capture Intent
+├── Write the SKILL.md
+├── Run & Evaluate
+└── Improve the Skill
+
+<span style="color:var(--c1)">## Claude.ai-specific instructions</span>   ← 无 subagent，串行测试
+<span style="color:var(--c3)">## Cowork-Specific Instructions</span>      ← 无浏览器，用 --static 输出
+<span style="color:var(--c4)">(默认段落 = Claude Code)</span>              ← 完整能力
+</pre>
+</div>
+<div class="quote">单文件优于多文件：① 核心逻辑不重复写 ② 触发机制只有一个入口 ③ 环境段落仅 10-15 行，不浪费 Context。</div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════ -->
+<!-- SECTION: 决策速查 -->
+<!-- ══════════════════════════════════════ -->
+<div id="decision" class="section">
+<div class="section-title">决策速查表</div>
+<div class="section-sub">设计 Skill 时遇到判断问题，直接查这里。</div>
+
+<div class="card">
+<div class="card-title">速查表：关键架构决策</div>
+<table class="info-table">
+  <tr><th style="width:35%">你要做的决策</th><th>判断标准</th><th>答案</th></tr>
+  <tr><td>Body 按什么组织？</td><td>用户任务是否遵循固定流程？</td><td>流程 → <span class="tag tag-c2">工作流模式</span>；按需 → <span class="tag tag-c1">知识库模式</span></td></tr>
+  <tr><td>用前置约束还是校验循环？</td><td>能否写机械 assertion 判断输出？</td><td>能 → <span class="tag tag-c2">校验循环</span>；不能 → <span class="tag tag-c1">前置约束</span></td></tr>
+  <tr><td>一段代码该放 SKILL.md 还是 scripts/？</td><td>Claude 是否需要理解并灵活组合？</td><td>需要 → <span class="tag tag-c1">SKILL.md</span>；不需要 → <span class="tag tag-c2">scripts/</span></td></tr>
+  <tr><td>要不要用 MUST/NEVER 大写？</td><td>产出能否后验验证？</td><td>不能 → <span class="tag tag-c4">大写红线</span>；能 → <span class="tag tag-c3">解释 why</span></td></tr>
+  <tr><td>Reference 用独立目录还是平铺？</td><td>变体数 × 每变体内容量？</td><td>大 → <span class="tag tag-c3">独立目录</span>；小 → <span class="tag tag-c1">reference/ 平铺</span></td></tr>
+  <tr><td>多环境支持拆文件还是合并？</td><td>核心逻辑是否相同？</td><td>相同 → <span class="tag tag-c2">单文件多环境</span>；不同 → 独立 Skill</td></tr>
+  <tr><td>SKILL.md 超过 500 行怎么办？</td><td>哪部分不是每次都需要？</td><td>下沉到 references/，Body 只留骨架和指针</td></tr>
+  <tr><td>Description 怎么写？</td><td>是否列举了所有触发场景？</td><td>写得"pushy"些，列举同义词，即使用户没明确提到也应触发</td></tr>
+</table>
+</div>
+
+<div class="card">
+<div class="card-title">核心原则清单</div>
+<div class="diagram" style="font-size:13px;color:var(--text2);line-height:1.8">
+<div style="margin-bottom:8px"><span style="color:var(--c1);font-weight:600">1.</span> <strong>Progressive Disclosure</strong> — 内容按需逐层加载，绝不一次性全部灌入上下文</div>
+<div style="margin-bottom:8px"><span style="color:var(--c2);font-weight:600">2.</span> <strong>Output Verifiability First</strong> — 产出可验证性是架构决策的元变量，决定一切下游选择</div>
+<div style="margin-bottom:8px"><span style="color:var(--c3);font-weight:600">3.</span> <strong>Context Window Budget</strong> — 每行都有成本。500 行硬约束是第一优先级</div>
+<div style="margin-bottom:8px"><span style="color:var(--c4);font-weight:600">4.</span> <strong>Negative Constraints</strong> — 无法定义"好产出"时，定义"坏产出"。对抗统计默认倾向</div>
+<div style="margin-bottom:8px"><span style="color:var(--c1);font-weight:600">5.</span> <strong>Explain Why > Shouting MUST</strong> — 解释原因比堆砌 MUST 更有效，除非在对抗默认倾向</div>
+<div style="margin-bottom:8px"><span style="color:var(--c2);font-weight:600">6.</span> <strong>Black-box Scripts</strong> — 确定性执行封装成脚本，Claude 当调用者而非读者</div>
+<div style="margin-bottom:8px"><span style="color:var(--c3);font-weight:600">7.</span> <strong>Fail-Closed</strong> — 存疑时默认失败。误杀的代价远低于放过</div>
+<div><span style="color:var(--c4);font-weight:600">8.</span> <strong>Defense in Depth</strong> — 不依赖单一防御手段。策略层 + 实施层同时存在</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<script>
+function show(id){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>

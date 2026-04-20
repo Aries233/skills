@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill 拆解 · skill-creator</title>
+<style>
+:root{--bg:#08080c;--surface:rgba(255,255,255,0.03);--surface2:rgba(255,255,255,0.06);--border:rgba(255,255,255,0.06);--text:#ededef;--text2:rgba(255,255,255,0.55);--text3:rgba(255,255,255,0.3);--c1:#06b6d4;--c2:#34d399;--c3:#f59e0b;--c4:#f87171;--c5:#a78bfa;--grad:linear-gradient(135deg,var(--c1),var(--c2));--font-mono:'SF Mono','Fira Code','JetBrains Mono',monospace;--font-sans:-apple-system,'Inter',system-ui,sans-serif;--r:10px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font-sans);line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 700px 500px at 15% 8%,rgba(6,182,212,0.05),transparent),radial-gradient(ellipse 500px 500px at 85% 55%,rgba(52,211,153,0.04),transparent);pointer-events:none;z-index:0}
+.wrap{max-width:880px;margin:0 auto;padding:40px 24px 80px;position:relative;z-index:1}
+.header{margin-bottom:36px}
+.header-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:600;font-family:var(--font-mono);background:rgba(6,182,212,0.1);color:var(--c1);border:1px solid rgba(6,182,212,0.2);margin-bottom:12px}
+.header h1{font-size:28px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px}
+.header p{font-size:14px;color:var(--text2);max-width:650px}
+.stats{display:flex;gap:16px;margin:20px 0;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat-label{font-size:10px;color:var(--text3);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:0.5px}
+.stat-value{font-size:15px;font-weight:600}
+.nav{display:flex;gap:6px;margin-bottom:32px;flex-wrap:wrap}
+.nav-btn{padding:7px 16px;border-radius:100px;font-size:12px;font-weight:500;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .2s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:rgba(6,182,212,0.12);border-color:rgba(6,182,212,0.3);color:var(--c1)}
+.section{display:none}.section.active{display:block}
+.section-title{font-size:20px;font-weight:700;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.section-sub{font-size:13px;color:var(--text2);margin-bottom:24px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:14px;backdrop-filter:blur(12px)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .icon{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.diagram{background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin:12px 0;overflow-x:auto}
+.flow{display:flex;align-items:stretch;gap:0;margin:16px 0;flex-wrap:wrap}
+.flow-step{flex:1;min-width:110px;padding:14px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface);text-align:center}
+.flow-step .step-num{font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-bottom:4px}
+.flow-step .step-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.flow-step .step-desc{font-size:11px;color:var(--text2);line-height:1.5}
+.flow-arrow{display:flex;align-items:center;color:var(--text3);font-size:18px;padding:0 4px;flex-shrink:0}
+.layers{display:flex;flex-direction:column;gap:0;margin:16px 0}
+.layer{padding:14px 18px;border:1px solid var(--border);position:relative}
+.layer:first-child{border-radius:var(--r) var(--r) 0 0}
+.layer:last-child{border-radius:0 0 var(--r) var(--r)}
+.layer .layer-label{font-size:10px;font-family:var(--font-mono);color:var(--text3);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.3px}
+.layer .layer-content{font-size:13px}
+.tag{display:inline-flex;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:var(--font-mono);letter-spacing:0.3px}
+.tag-c1{background:rgba(6,182,212,0.12);color:var(--c1)}.tag-c2{background:rgba(52,211,153,0.12);color:var(--c2)}.tag-c3{background:rgba(245,158,11,0.12);color:var(--c3)}.tag-c4{background:rgba(248,113,113,0.12);color:var(--c4)}.tag-c5{background:rgba(167,139,250,0.12);color:var(--c5)}
+.quote{background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:6px;padding:12px 16px;margin:10px 0;font-size:12px;color:var(--text2);font-family:var(--font-mono);font-style:italic;line-height:1.7}
+.src-box{background:rgba(0,0,0,0.4);border:1px solid rgba(6,182,212,0.15);border-radius:8px;padding:14px 18px;margin:10px 0;font-size:12px;font-family:var(--font-mono);line-height:1.7;color:var(--c1);white-space:pre-wrap}
+.info-table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0}
+.info-table th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border);color:var(--c1);font-weight:600;font-size:11px}
+.info-table td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--text2);vertical-align:top}
+.info-table tr:hover td{color:var(--text)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr}}
+.principle{display:flex;gap:14px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px}
+.principle-num{width:32px;height:32px;border-radius:8px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;color:#000}
+.principle-body{flex:1}.principle-title{font-size:13px;font-weight:600;margin-bottom:3px}.principle-desc{font-size:12px;color:var(--text2);line-height:1.6}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:0;margin:16px 0;align-items:stretch}
+.vs-side{padding:16px;border-radius:var(--r);border:1px solid var(--border)}
+.vs-side.bad{background:rgba(248,113,113,0.04);border-color:rgba(248,113,113,0.15)}
+.vs-side.good{background:rgba(52,211,153,0.04);border-color:rgba(52,211,153,0.15)}
+.vs-label{font-size:11px;font-weight:600;font-family:var(--font-mono);margin-bottom:8px}
+.vs-side.bad .vs-label{color:var(--c4)}.vs-side.good .vs-label{color:var(--c2)}
+.vs-divider{display:flex;align-items:center;padding:0 12px;color:var(--text3);font-size:13px;font-weight:700}
+.vs-item{font-size:12px;color:var(--text2);margin-bottom:6px;padding-left:14px;position:relative;line-height:1.5}
+.vs-item::before{content:'';position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:50%}
+.vs-side.bad .vs-item::before{background:var(--c4)}.vs-side.good .vs-item::before{background:var(--c2)}
+.expandable{cursor:pointer;transition:all .2s}.expandable:hover{border-color:rgba(255,255,255,0.12)}
+.expandable .expand-content{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.expandable.open .expand-content{max-height:2000px}
+.expandable .expand-hint{font-size:11px;color:var(--text3);margin-top:6px;font-style:italic}
+.expandable.open .expand-hint{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="header">
+  <div class="header-badge">skill-architecture / deep-dive</div>
+  <h1>skill-creator</h1>
+  <p>Anthropic 官方最复杂的 Skill — 创建、测试、迭代改进其他 Skill 的元工具。内含完整的 Eval 循环、Grader 评分系统、Description 自动优化引擎。</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><span class="stat-label">文件数</span><span class="stat-value">15+</span></div>
+  <div class="stat"><span class="stat-label">SKILL.md</span><span class="stat-value">485 行</span></div>
+  <div class="stat"><span class="stat-label">类型</span><span class="stat-value" style="color:var(--c1)">工作流型</span></div>
+  <div class="stat"><span class="stat-label">子代理</span><span class="stat-value">3 个</span></div>
+  <div class="stat"><span class="stat-label">脚本</span><span class="stat-value">9 个</span></div>
+</div>
+
+<div class="nav" id="nav">
+  <button class="nav-btn active" data-s="s1">总览</button>
+  <button class="nav-btn" data-s="s2">Body 组织</button>
+  <button class="nav-btn" data-s="s3">写作风格</button>
+  <button class="nav-btn" data-s="s4">Eval 循环</button>
+  <button class="nav-btn" data-s="s5">Description 优化</button>
+  <button class="nav-btn" data-s="s6">子代理体系</button>
+  <button class="nav-btn" data-s="s7">跨环境适配</button>
+  <button class="nav-btn" data-s="s8" style="background:rgba(245,158,11,0.08);border-color:rgba(245,158,11,0.2);color:var(--c3)">实战框架</button>
+</div>
+
+<!-- ==================== S1: 总览 ==================== -->
+<div class="section active" id="s1">
+  <div class="section-title">总览：元工具的全貌</div>
+  <div class="section-sub">skill-creator 是"造 Skill 的 Skill"——理解它等于理解官方工程方法论的核心。</div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.15);color:var(--c1)">1</span>定位与核心能力</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:12px">skill-creator 是一个<strong style="color:var(--text)">元工具</strong>——它的用户不是终端用户，而是想创建/改进 Skill 的人。核心能力覆盖 Skill 生命周期每个阶段：</p>
+    <div class="flow">
+      <div class="flow-step" style="border-color:rgba(6,182,212,0.3)">
+        <div class="step-num" style="color:var(--c1)">阶段 1</div>
+        <div class="step-title">意图捕获</div>
+        <div class="step-desc">从对话中提取用户需求<br>做什么/何时触发/输出/测试</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="border-color:rgba(52,211,153,0.3)">
+        <div class="step-num" style="color:var(--c2)">阶段 2</div>
+        <div class="step-title">起草 SKILL.md</div>
+        <div class="step-desc">基于访谈结果<br>填写 name / description / body</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="border-color:rgba(245,158,11,0.3)">
+        <div class="step-num" style="color:var(--c3)">阶段 3</div>
+        <div class="step-title">测试 & 评分</div>
+        <div class="step-desc">生成测试提示词 → 运行<br>→ Grader 评分 → 人工审查</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="border-color:rgba(248,113,113,0.3)">
+        <div class="step-num" style="color:var(--c4)">阶段 4</div>
+        <div class="step-title">迭代改进</div>
+        <div class="step-desc">根据反馈改进 → 重测<br>直到满意为止</div>
+      </div>
+    </div>
+    <div class="quote">这四个阶段不是线性管道，而是<strong style="color:var(--text)">灵活跳入的循环</strong>。用户可能直接说"帮我改进这个已有的 Skill"，跳过阶段 1-2。或者"不需要 eval，直接 vibe"，跳过阶段 3。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(52,211,153,0.15);color:var(--c2)">2</span>文件结构全景</div>
+    <div class="diagram" style="font-family:var(--font-mono);font-size:12px;color:var(--text2);line-height:1.8">
+<pre>skill-creator/
+├── <span style="color:var(--c2)">SKILL.md</span>                    ← 485 行核心指令（工作流型正文）
+│
+├── <span style="color:var(--c3)">agents/</span>                      ← 子代理定义（3 个专业角色）
+│   ├── grader.md              ← 评分员：验证断言 + 提取隐性声明 + 反噬评估
+│   ├── analyzer.md            ← 分析师：盲对比分析 + 基准模式检测
+│   └── comparator.md          ← 盲审员：不知 A/B 身份的质量评判
+│
+├── <span style="color:var(--c1)">scripts/</span>                     ← 自动化脚本（9 个 Python 工具）
+│   ├── run_loop.py            ← Description 优化主循环（训练/测试集分割）
+│   ├── run_eval.py            ← 单轮评估执行
+│   ├── improve_description.py ← AI 驱动的 description 改进
+│   ├── aggregate_benchmark.py ← 聚合多轮基准数据
+│   ├── generate_report.py     ← 生成基准报告
+│   ├── package_skill.py       ← 打包 .skill 文件
+│   ├── quick_validate.py      ← 快速校验 skill 结构
+│   └── utils.py               ← 共享工具函数
+│
+├── <span style="color:var(--c5)">eval-viewer/</span>                 ← 人工审查界面
+│   ├── generate_review.py     ← 生成审查用 HTML 服务
+│   └── viewer.html            ← 审查界面模板
+│
+├── references/
+│   └── schemas.md             ← JSON schema（数据格式）定义
+│
+└── assets/
+    └── eval_review.html       ← Description 评估审查模板</pre>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--c3)">3</span>为什么它是工程标杆？</div>
+    <table class="info-table">
+      <tr><th style="width:25%">架构特征</th><th>在 skill-creator 中的体现</th></tr>
+      <tr><td><span class="tag tag-c1">工作流型正文</span></td><td>不按知识类别组织，而是按<strong>执行阶段</strong>组织：捕获意图 → 写 SKILL.md → 运行和评估 → 改进 → 循环</td></tr>
+      <tr><td><span class="tag tag-c2">校验循环</span></td><td>产出可客观验证（Skill 好不好 = 测试用例通过率），所以投资了完整的评估基础设施</td></tr>
+      <tr><td><span class="tag tag-c3">跨环境适配</span></td><td>同一文件包含 Claude Code / Claude.ai / Cowork 三个环境的适配段落，90% 逻辑共享</td></tr>
+      <tr><td><span class="tag tag-c4">多子代理协作</span></td><td>Grader 评分 → Analyzer 分析 → Comparator 盲审，三层独立角色互不干扰</td></tr>
+      <tr><td><span class="tag tag-c5">自动优化引擎</span></td><td>run_loop.py 实现了训练/测试集分割 + 自动迭代的 Description 优化系统</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ==================== S2: Body 组织 ==================== -->
+<div class="section" id="s2">
+  <div class="section-title">正文组织方式</div>
+  <div class="section-sub">工作流型正文——按执行阶段组织，不是按知识类别。</div>
+
+  <div class="card">
+    <div class="card-title">正文结构地图（485 行分为 6 大区块）</div>
+    <div class="layers">
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label">第 1 段 · 引言 + 沟通策略（第 1-42 行）</div>
+        <div class="layer-content" style="font-size:13px;color:var(--text2)">
+          高层级流程概述（6 个步骤）+ 用户沟通指南。特别强调<strong>根据用户技术水平调整术语</strong>——"JSON"和"assertion"（断言）这类词要在确认用户懂之后再使用。
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(52,211,153,0.04)">
+        <div class="layer-label">第 2 段 · 创建 Skill（第 45-160 行）</div>
+        <div class="layer-content" style="font-size:13px;color:var(--text2)">
+          捕获意图（4 个关键问题）→ 访谈和研究 → 写 SKILL.md → Skill 写作指南（包含渐进式披露、Skill 解剖结构、写作模式、测试用例的完整指南）。这是<strong>知识密集</strong>段落——教 Claude 如何写 Skill。
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(245,158,11,0.04)">
+        <div class="layer-label">第 3 段 · 运行和评估（第 163-288 行）</div>
+        <div class="layer-content" style="font-size:13px;color:var(--text2)">
+          最长的连续段落。5 步序列：<span style="color:var(--c1)">启动所有运行 → 起草断言 → 捕获耗时 → 评分和聚合 → 读取反馈</span>。强调"不要中途停下"——这是一个原子操作序列。
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(167,139,250,0.04)">
+        <div class="layer-label">第 4 段 · 改进 Skill（第 292-322 行）</div>
+        <div class="layer-content" style="font-size:13px;color:var(--text2)">
+          迭代循环的核心哲学：<strong>泛化 > 过拟合</strong>。4 条改进原则 + 迭代终止条件（用户满意 / 全部空反馈 / 无法进步）。
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label">第 5 段 · Description 优化（第 333-404 行）</div>
+        <div class="layer-content" style="font-size:13px;color:var(--text2)">
+          独立的 Description（描述字段）优化系统。4 步流程：生成评估查询 → 用户审查 → run_loop 自动优化 → 应用结果。内含训练/测试集分割防过拟合。
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(248,113,113,0.04)">
+        <div class="layer-label">第 6 段 · 环境适配 + 收尾（第 420-485 行）</div>
+        <div class="layer-content" style="font-size:13px;color:var(--text2)">
+          Claude.ai（无子代理 → 串行测试）、Cowork（无浏览器 → 静态输出）、Claude Code（完整能力）。最后重申核心循环。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">为什么是工作流型而不是知识库型？</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">不只是"因为有多步骤"这么简单。背后是一个<strong style="color:var(--text)">关键判断</strong>：</p>
+    <div class="quote" style="font-style:normal">
+      <strong style="color:var(--text)">判断依据：</strong>用户每次来到这个 Skill 时，起点和终点都一样——从"我想要一个 Skill"到"我有一个可用的 Skill"。路径是确定的，只是中间的细节不同。这和 pdf Skill 完全不同——pdf 的用户每次来的需求都不同（合并、拆分、OCR、填表……），模型需要每次挑选不同的工具组合。
+    </div>
+    <div class="grid2">
+      <div style="padding:14px;border-radius:8px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.15)">
+        <div style="font-size:12px;font-weight:600;color:var(--c2);margin-bottom:6px">skill-creator 的工作流结构</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          <strong>用户任务：</strong>"帮我创建一个 Skill"<br>
+          <strong>路径：</strong>有明确的 A→B 流程<br>
+          <strong>正文结构：</strong>按<strong>执行阶段</strong>排列<br>
+          <strong>Claude 的角色：</strong>流程执行者 + 引导者<br>
+          <span style="color:var(--c2)">→ 用户从"空白"到"可用 Skill"</span>
+        </div>
+      </div>
+      <div style="padding:14px;border-radius:8px;background:rgba(6,182,212,0.04);border:1px solid rgba(6,182,212,0.15)">
+        <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:6px">对比：pdf 的知识库结构</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          <strong>用户任务：</strong>"帮我处理这个 PDF"<br>
+          <strong>路径：</strong>每次需要的工具组合不同<br>
+          <strong>正文结构：</strong>按<strong>知识类别</strong>排列<br>
+          <strong>Claude 的角色：</strong>参考手册查阅者<br>
+          <span style="color:var(--c1)">→ Claude 每次挑选不同的工具组合</span>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-top:12px">
+      <span class="tag tag-c3">工程推理</span> 如果把 skill-creator 写成知识库型（"这是断言怎么写""这是评分怎么做"），Claude 会在用户说"帮我创建一个 Skill"时不知道<strong>先做哪个后做哪个</strong>。工作流型的价值不是"教知识"，而是<strong>强加时序</strong>——先捕获意图，再写草稿，再测试，再改进。跳步是大多数 Skill 质量问题的根源。
+    </p>
+  </div>
+
+  <!-- WHY: Communication strategy at the top -->
+  <div class="card" style="border-color:rgba(167,139,250,0.2)">
+    <div class="card-title"><span class="icon" style="background:rgba(167,139,250,0.15);color:var(--c5)">?</span> 为什么"沟通策略"放在正文最前面？</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">485 行中，前 42 行（约占 9%）既不是技能指令，也不是流程步骤，而是<strong>教 Claude 怎么和用户说话</strong>。为什么这个优先级这么高？</p>
+    <div class="src-box">"The skill creator is liable to be used by people across a wide range of
+familiarity with coding jargon... there's a trend now where the power of
+Claude is inspiring plumbers to open up their terminals, parents and
+grandparents to google 'how to install npm'."</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】skill-creator 的用户覆盖了从零基础到资深开发者的整个光谱……现在有一种趋势，Claude 的能力正在激励水管工打开终端，父母和祖父母去搜索"如何安装 npm"。</div>
+    <div class="quote" style="margin-top:10px">
+      <strong style="color:var(--text)">设计推理：</strong>skill-creator 是所有 Skill 中<strong>用户交互最密集</strong>的——它需要和用户反复对话（捕获意图、确认测试用例、审查结果、收集反馈）。如果 Claude 一上来就用"JSON""assertion""baseline"这些术语吓跑用户，整个流程就废了。所以 Anthropic 把"沟通策略"放在所有技术指令之前——<strong>先学会说话，再学会做事</strong>。
+    </div>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">
+      <span class="tag tag-c5">跨 Skill 对比</span> frontend-design 完全不需要"沟通策略"段落——因为它不要求用户参与流程。pdf 也不需要——用户只是说"帮我处理这个文件"。只有 skill-creator 需要深度人机协作，所以只有它把沟通策略提到了最高优先级。
+    </p>
+  </div>
+</div>
+
+<!-- ==================== S3: 写作风格 ==================== -->
+<div class="section" id="s3">
+  <div class="section-title">写作风格分析</div>
+  <div class="section-sub">"解释为什么"风格的教科书级示范——产出可验证，所以用温和说服代替强硬命令。</div>
+
+  <div class="card">
+    <div class="card-title">软性说服 vs. 大写红线：官方的选择</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">skill-creator 的产出（Skill 质量）<strong>可客观验证</strong>（通过评估通过率）。因此官方选择了"解释为什么"的温和风格：</p>
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="color:var(--c2);font-weight:600;margin-bottom:8px;font-size:11px">skill-creator 的实际写法</div>
+          <div class="src-box" style="margin:0">Try to explain to the model why things
+are important in lieu of heavy-handed
+musty MUSTs. Use theory of mind and
+try to make the skill general and not
+super-narrow to specific examples.
+
+If you find yourself writing ALWAYS or
+NEVER in all caps, or using super rigid
+structures, <span style="color:var(--c3)">that's a yellow flag</span> — if
+possible, reframe and explain the
+reasoning so that the model understands
+why.</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】试着解释为什么事情重要，而非用强硬的"必须"。用心智理论，让 Skill 保持泛化而非过窄。如果你发现自己正在用全大写 ALWAYS 或 NEVER，这是一个黄旗警告。</div>
+        </div>
+        <div>
+          <div style="color:var(--c4);font-weight:600;margin-bottom:8px;font-size:11px">对比：frontend-design 的写法</div>
+          <div class="src-box" style="margin:0"><span style="color:var(--c4)">CRITICAL: Typography anti-patterns.
+NEVER use these overused fonts:
+Inter, Roboto, Arial, system-ui
+as primary identity font.</span>
+
+NEVER use blue-purple gradient
+hero sections.
+NEVER settle for a design that
+looks like a generic SaaS template.</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】关键铁律：排版反模式。绝对不要用 Inter/Roboto/Arial 等过度使用的字体。绝对不要用蓝紫渐变大图区域。</div>
+        </div>
+      </div>
+    </div>
+    <div class="quote">同一个团队的同一个作者，对不同 Skill 用了完全相反的写作风格——区别不在"规则重要程度"，而在<strong style="color:var(--text)">产出可验证性</strong>。有评估兜底 → 温和；无评估兜底 → 强硬。</div>
+  </div>
+
+  <!-- Writing style decision box -->
+  <div class="card" style="border-color:rgba(6,182,212,0.25)">
+    <div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.15);color:var(--c1)">?</span> 写作风格决策公式（跨 Skill 通用）</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">从 skill-creator 和 frontend-design 的对比中提炼的决策逻辑——适用于你未来写的每个 Skill：</p>
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="padding:14px;border-radius:8px;background:rgba(52,211,153,0.05);border:1px solid rgba(52,211,153,0.2)">
+          <div style="font-size:11px;font-weight:600;color:var(--c2);margin-bottom:8px">有评估 + 产出可验证 → "解释为什么"</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            评估循环会捕获错误，所以信任模型的判断力<br>
+            例：skill-creator（评估通过率验证 Skill 质量）<br>
+            <span style="color:var(--text3)">→ 你的 Skill 如果产出可跑自动化测试，就用这种风格</span>
+          </div>
+        </div>
+        <div style="padding:14px;border-radius:8px;background:rgba(248,113,113,0.05);border:1px solid rgba(248,113,113,0.2)">
+          <div style="font-size:11px;font-weight:600;color:var(--c4);margin-bottom:8px">无评估 + 产出主观 → NEVER 硬约束</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            Prompt 是唯一防线，必须在源头堵死错误方向<br>
+            例：frontend-design（"好不好看"无法自动检测）<br>
+            <span style="color:var(--text3)">→ 你的 Skill 如果产出靠人眼判断，就用这种风格</span>
+          </div>
+        </div>
+        <div style="padding:14px;border-radius:8px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.2)">
+          <div style="font-size:11px;font-weight:600;color:var(--c3);margin-bottom:8px">有评估但流程步骤关键 → 混合型</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            对产出质量用"解释为什么"，对流程正确性用全大写<br>
+            例：skill-creator 的 Cowork 适配（唯一的全大写）<br>
+            <span style="color:var(--text3)">→ 流程步骤错误比产出质量差更致命时，用这种风格</span>
+          </div>
+        </div>
+        <div style="padding:14px;border-radius:8px;background:rgba(167,139,250,0.05);border:1px solid rgba(167,139,250,0.2)">
+          <div style="font-size:11px;font-weight:600;color:var(--c5);margin-bottom:8px">无评估 + 有人工审查 → 混合型偏硬</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            自动化尝试 + 人工兜底 + 适度硬约束<br>
+            例：skill-creator 的 Description 优化（自动化 + 人工审查 HTML）<br>
+            <span style="color:var(--text3)">→ 可以自动化部分验证但最终靠人把关时，用这种风格</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">"解释为什么"风格的 5 个实例</div>
+    <div style="border-left:3px solid var(--c1);padding:12px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:11px;color:var(--c1);font-weight:600;margin-bottom:4px">实例 1 — 为什么不要过拟合</div>
+      <div class="src-box" style="margin:0">"The big picture thing that's happening here is that we're trying to create
+skills that can be used a million times... if the skill works only for those
+examples, <strong>it's useless</strong>."</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">→ 不说"绝对不要过拟合"，而是解释<strong>为什么过拟合致命</strong></div>
+    </div>
+    <div style="border-left:3px solid var(--c1);padding:12px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:11px;color:var(--c1);font-weight:600;margin-bottom:4px">实例 2 — 为什么用全大写是黄旗</div>
+      <div class="src-box" style="margin:0">"If you find yourself writing ALWAYS or NEVER in all caps...
+<strong>that's a yellow flag</strong> — reframe and explain the reasoning
+so that the model understands why."</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">→ 用<strong>元认知提示</strong>代替硬规则——让 Claude 自检</div>
+    </div>
+    <div style="border-left:3px solid var(--c1);padding:12px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:11px;color:var(--c1);font-weight:600;margin-bottom:4px">实例 3 — 为什么精简 > 冗余</div>
+      <div class="src-box" style="margin:0">"Keep the prompt lean. Remove things that aren't pulling their weight."</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">→ 用"不够分量"这个隐喻而非"必须简洁"</div>
+    </div>
+    <div style="border-left:3px solid var(--c1);padding:12px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:11px;color:var(--c1);font-weight:600;margin-bottom:4px">实例 4 — 为什么需要心智理论</div>
+      <div class="src-box" style="margin:0">"Today's LLMs are smart. They have good theory of mind... try to actually
+understand the task and why the user wrote what they wrote, and transmit
+this understanding into the instructions."</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">→ 把 Claude 当作<strong>理解能力强的协作者</strong>，不是被动执行者</div>
+    </div>
+    <div style="border-left:3px solid var(--c1);padding:12px 16px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:11px;color:var(--c1);font-weight:600;margin-bottom:4px">实例 5 — 为什么重复说明是必要的</div>
+      <div class="src-box" style="margin:0">"Repeating one more time the core loop here for emphasis..."</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px">→ 不说"永远记住"，而是在文末<strong>重复关键循环</strong>——利用近因效应</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">唯一的例外：全大写用在了哪里？</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">485 行中只有一处用了全大写——在 Cowork 适配段落：</p>
+    <div class="src-box">GENERATE THE EVAL VIEWER *BEFORE* evaluating inputs yourself. You want
+to get them in front of the human ASAP!</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】在自行评估输入之前，*先*生成评估查看器。你要尽快让人类看到结果！</div>
+    <div class="quote">为什么这里用大写？因为这是<strong style="color:var(--text)">流程正确性</strong>保障——对抗 Claude 在 Cowork 环境中"跳过评估查看器直接自己评估"的倾向。即使有评估兜底，<strong>特定流程步骤</strong>在特定环境下仍需强制。</div>
+  </div>
+
+  <!-- WHY: Why "explain why" - deep reasoning -->
+  <div class="card" style="border-color:rgba(6,182,212,0.25)">
+    <div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.2);color:var(--c1)">?</span> 深层推理：为什么"解释为什么"比 NEVER 更有效？</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">这不是"温和 vs. 强硬"的风格偏好。Anthropic 选择"解释为什么"有三个<strong>工程层面的原因</strong>：</p>
+
+    <div style="border-left:3px solid var(--c1);padding:14px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:4px">原因 1：自纠错能力</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        当模型<strong>理解了原因</strong>，它不仅能在已知场景做对，还能在<strong>未预见的新场景</strong>中自己推导出正确行为。NEVER 只能覆盖已知错误——如果用户提出了一个官方没预见的边缘场景，NEVER 就失效了。"解释为什么"让模型具备了<strong>泛化判断力</strong>。
+      </div>
+    </div>
+
+    <div style="border-left:3px solid var(--c1);padding:14px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:4px">原因 2：评估循环兜底</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        skill-creator 有完整的评估循环。即使模型在某个场景下判断失误，评估会捕获错误 → 人工审查会发现问题 → 下一轮迭代会修正。这意味着<strong>"解释为什么"的风险被评估循环吸收了</strong>。在无评估的 frontend-design 中，这个安全网不存在。
+      </div>
+    </div>
+
+    <div style="border-left:3px solid var(--c1);padding:14px 16px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:4px">原因 3：模型能力信任</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        源码原文："Today's LLMs are <em>smart</em>。" Anthropic 认为当前模型足够聪明，能够理解复杂推理。把模型当"需要理解的协作者"而非"需要命令的执行者"，产出质量更高。但这个信任有前提——<strong>产出必须有验证机制</strong>。无验证 = 无信任 = 必须 NEVER。
+      </div>
+    </div>
+
+    <div class="quote" style="margin-top:12px">
+      <strong style="color:var(--text)">一句话总结：</strong>"解释为什么"是高信任 + 有兜底时的最优策略；NEVER 是低信任 + 无兜底时的最优策略。不是风格选择，是<strong>风险管理的工程决策</strong>。
+    </div>
+  </div>
+
+  <!-- WHY: Why repeat at the end -->
+  <div class="card" style="border-color:rgba(245,158,11,0.2)">
+    <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.2);color:var(--c3)">?</span> 为什么在尾部重复核心循环？</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">源码在正文最后（第 472-481 行）把核心循环又完整列了一遍：</p>
+    <div class="src-box">Repeating one more time the core loop here for emphasis:
+
+- Figure out what the skill is about
+- Draft or edit the skill
+- Run claude-with-access-to-the-skill on test prompts
+- With the user, evaluate the outputs
+- Repeat until you and the user are satisfied</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】再次重复核心循环以示强调：弄清楚 Skill 要做什么 → 起草或编辑 → 在测试提示词上运行 → 和用户一起评估 → 重复直到满意。</div>
+    <div class="quote" style="margin-top:10px">
+      <strong style="color:var(--text)">设计推理：</strong>利用 LLM 的<strong>近因效应（Recency Bias）</strong>——模型对最后读到的内容印象最深。在即将开始生成前，用核心循环覆盖模型的注意力焦点。这不是"啰嗦"，是<strong>精确的注意力控制</strong>。frontend-design 用"extraordinary... don't hold back"做激励性锚定，skill-creator 用核心循环做流程性锚定——同一个心理学原理的不同应用。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== S4: Eval 循环 ==================== -->
+<div class="section" id="s4">
+  <div class="section-title">评估循环深度拆解</div>
+  <div class="section-sub">skill-creator 最核心的工程价值——一套完整的测试、评分、人工审查、迭代改进闭环。</div>
+
+  <div class="card">
+    <div class="card-title">完整评估循环可视化</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin:16px 0">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(6,182,212,0.2);background:rgba(6,182,212,0.05);color:var(--c1)">起草 SKILL.md</div>
+        <span style="color:var(--text3)">→</span>
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(245,158,11,0.2);background:rgba(245,158,11,0.05);color:var(--c3)">写 2-3 个测试提示词</div>
+        <span style="color:var(--text3)">→</span>
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.05);color:var(--c2)">启动所有运行（含技能 + 基线并行）</div>
+      </div>
+      <div style="text-align:center;color:var(--text3);padding:4px 0">↓ 运行在后台执行</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(167,139,250,0.2);background:rgba(167,139,250,0.05);color:var(--c5)">等待时：起草断言</div>
+        <span style="color:var(--text3)">→</span>
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(248,113,113,0.2);background:rgba(248,113,113,0.05);color:var(--c4)">Grader 评分（子代理）</div>
+        <span style="color:var(--text3)">→</span>
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.05);color:var(--c2)">聚合基准数据</div>
+      </div>
+      <div style="text-align:center;color:var(--text3);padding:4px 0">↓</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(6,182,212,0.2);background:rgba(6,182,212,0.05);color:var(--c1)">Analyzer 分析模式</div>
+        <span style="color:var(--text3)">→</span>
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(245,158,11,0.2);background:rgba(245,158,11,0.05);color:var(--c3)">生成查看器（人工审查）</div>
+        <span style="color:var(--text3)">→</span>
+        <div style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.05);color:var(--c2)">用户反馈 → 改进 Skill</div>
+      </div>
+      <div style="text-align:center;padding:8px 0">
+        <span style="padding:10px 16px;border-radius:8px;font-size:11px;font-weight:600;border:2px dashed var(--c3);color:var(--c3);background:rgba(245,158,11,0.04)">↺ 重复直到：用户满意 / 全部空反馈 / 无法进步</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">步骤 1：启动所有运行（关键设计决策）</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">官方明确要求：<strong>含技能和基线必须在同一个回合中全部启动</strong>。</p>
+    <div class="diagram">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="padding:12px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.15);border-radius:8px">
+          <div style="font-size:11px;font-weight:600;color:var(--c2);margin-bottom:6px">含技能运行</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            → 加载 Skill 后执行<br>
+            → 保存到 <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:3px">iteration-N/eval-X/with_skill/</code><br>
+            → 测试 Skill 的实际效果
+          </div>
+        </div>
+        <div style="padding:12px;background:rgba(248,113,113,0.04);border:1px solid rgba(248,113,113,0.15);border-radius:8px">
+          <div style="font-size:11px;font-weight:600;color:var(--c4);margin-bottom:6px">基线运行</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.6">
+            → 不加载 Skill 执行（或用旧版 Skill）<br>
+            → 保存到 <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:3px">without_skill/</code> 或 <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:3px">old_skill/</code><br>
+            → 提供对比基准
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="quote">为什么不分开跑？"一次性启动所有内容，这样它们大约在同一时间全部完成"——并行不仅节省时间，更重要的是<strong style="color:var(--text)">让同一时刻的模型行为保持可比</strong>。</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">步骤 2：等待时的生产力利用</div>
+    <div class="src-box">Don't just wait for the runs to finish — you can use this time productively.
+Draft quantitative assertions for each test case and explain them to the user.</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】不要干等运行完成——你可以高效利用这段时间。为每个测试用例起草定量断言并向用户解释。</div>
+    <p style="font-size:12px;color:var(--text2);margin-top:10px">这个设计体现了工程思维：<strong style="color:var(--text)">不让任何时间白白浪费</strong>。运行在后台跑的同时，Claude 在前台和用户讨论断言设计——等运行结束时，断言也准备好了。</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">步骤 3：耗时数据的唯一捕获机会</div>
+    <div class="src-box">When each subagent task completes, you receive a notification containing
+total_tokens and duration_ms. Save this data immediately to timing.json.
+
+This is the only opportunity to capture this data — it comes through the
+task notification and isn't persisted elsewhere.</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】当每个子代理任务完成时，你会收到包含 total_tokens（总令牌数）和 duration_ms（耗时毫秒）的通知。立即保存到 timing.json。这是捕获这些数据的唯一机会——它通过任务通知传递，不会在其他地方持久化。</div>
+    <div class="quote">如果错过了通知，耗时数据就永久丢失。这体现了 <strong style="color:var(--text)">Fail-Closed（失败即关闭）</strong> 思想："逐个处理通知，而不是试图批量处理"。</div>
+  </div>
+
+  <!-- Cross-Skill: Eval vs Constraints -->
+  <div class="card" style="border-color:rgba(52,211,153,0.2)">
+    <div class="card-title"><span class="icon" style="background:rgba(52,211,153,0.15);color:var(--c2)">X</span> 跨 Skill 模式对照：评估循环 vs 负面约束</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">skill-creator 的评估循环和 frontend-design 的负面约束系统，表面完全不同，本质解决同一个问题：<strong style="color:var(--text)">如何确保输出质量</strong>。</p>
+    <table class="info-table">
+      <tr><th>维度</th><th style="color:var(--c1)">skill-creator：评估循环</th><th style="color:var(--c3)">frontend-design：负面约束</th></tr>
+      <tr><td>质量保障方式</td><td>运行后验证（事后检查）</td><td>运行前约束（事前预防）</td></tr>
+      <tr><td>成本</td><td>高（需要子代理、脚本、人工审查）</td><td>低（只需 SKILL.md 里的文字）</td></tr>
+      <tr><td>适用条件</td><td>产出可客观验证</td><td>产出主观，无法自动验证</td></tr>
+      <tr><td>发现错误的时机</td><td>运行后立即发现</td><td>可能运行多次后才意识到</td></tr>
+      <tr><td>你的 Skill 该选哪个</td><td>产出是文件、数据、代码</td><td>产出是设计、文案、创意</td></tr>
+    </table>
+    <div class="quote" style="margin-top:10px">
+      <strong style="color:var(--text)">实战决策：</strong>如果你的 Skill 产出可以通过脚本验证（如"生成的文件是否包含某列数据"），就投资评估循环；如果产出只能靠人眼判断（如"这个设计好不好看"），就把精力放在负面约束上。<strong>不要在主观产出的 Skill 上硬塞评估循环</strong>——那是浪费工程投入。
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">步骤 4：评分 → 聚合 → 分析 → 查看器</div>
+    <div class="flow">
+      <div class="flow-step" style="flex:1.2;border-color:rgba(248,113,113,0.15)">
+        <div class="step-num" style="color:var(--c4)">4a</div>
+        <div class="step-title">评分</div>
+        <div class="step-desc">Grader 子代理逐条验证断言<br>+ 提取隐性声明 + 反噬评估</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="flex:1.2;border-color:rgba(52,211,153,0.15)">
+        <div class="step-num" style="color:var(--c2)">4b</div>
+        <div class="step-title">聚合</div>
+        <div class="step-desc">aggregate_benchmark.py 聚合<br>通过率 + 耗时 + 令牌数<br>带均值 ± 标准差</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="flex:1.2;border-color:rgba(167,139,250,0.15)">
+        <div class="step-num" style="color:var(--c5)">4c</div>
+        <div class="step-title">分析</div>
+        <div class="step-desc">检测无区分力断言<br>高方差评估、反常模式</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" style="flex:1.2;border-color:rgba(6,182,212,0.15)">
+        <div class="step-num" style="color:var(--c1)">4d</div>
+        <div class="step-title">查看器</div>
+        <div class="step-desc">generate_review.py 生成<br>人工审查界面（产出 + 基准双标签页）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHY: Why 5 steps not 3 -->
+  <div class="card" style="border-color:rgba(245,158,11,0.2)">
+    <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.2);color:var(--c3)">?</span> 为什么评估循环是 5 步而不是更简单？</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">一个更"精简"的评估可以是：运行 → 评分 → 改进，3 步搞定。为什么官方要拆成 5 步？因为每一步解决一个<strong>不同的工程问题</strong>：</p>
+    <table class="info-table">
+      <tr><th>步骤</th><th>它解决什么问题</th><th>如果省掉会怎样</th></tr>
+      <tr><td><span class="tag tag-c1">步骤 1</span> 并行启动</td><td>确保含技能和基线在同一条件下对比</td><td>分开跑 = 模型版本/温度不同 = 对比无效</td></tr>
+      <tr><td><span class="tag tag-c3">步骤 2</span> 等待时写断言</td><td>不浪费等待时间 + 断言和运行解耦</td><td>先写断言会受预设偏见影响；后写意味着干等</td></tr>
+      <tr><td><span class="tag tag-c4">步骤 3</span> 即时捕获耗时</td><td>唯一能拿到耗时数据的机会</td><td>错过通知 = 永久丢失 = 无法分析性能回归</td></tr>
+      <tr><td><span class="tag tag-c5">步骤 4</span> 评分+聚合+分析+查看器</td><td>从不同角度审视同一份结果</td><td>只评分 = 可能漏掉系统性问题；只看查看器 = 无量化依据</td></tr>
+      <tr><td><span class="tag tag-c2">步骤 5</span> 读取人工反馈</td><td>人的直觉发现自动化检测不到的问题</td><td>只靠自动评分 = 过拟合断言，忽略真实体验</td></tr>
+    </table>
+    <div class="quote" style="margin-top:10px">
+      <strong style="color:var(--text)">设计哲学：</strong>5 步不是过度工程化。每一步要么<strong>防止一种特定的信息丢失</strong>（步骤 3），要么<strong>消除一种特定的偏差</strong>（步骤 1 消除时间偏差，步骤 5 消除自动化偏差）。少一步就多一个盲区。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== S5: Description 优化 ==================== -->
+<div class="section" id="s5">
+  <div class="section-title">Description 优化系统</div>
+  <div class="section-sub">自动化的触发精度优化引擎——用机器学习训练思维来解决 Skill 触发问题。</div>
+
+  <div class="card">
+    <div class="card-title">为什么需要专门的 Description 优化？</div>
+    <div class="grid2">
+      <div style="padding:14px;background:var(--surface);border:1px solid rgba(248,113,113,0.15);border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--c4);margin-bottom:6px">问题：触发不足</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">Claude 天然倾向<strong>不触发</strong> Skill。即使 description 匹配，简单任务也不会触发（因为 Claude 觉得自己能搞定）。结果：精心设计的 Skill 被冷落。</div>
+      </div>
+      <div style="padding:14px;background:var(--surface);border:1px solid rgba(52,211,153,0.15);border-radius:8px">
+        <div style="font-size:12px;font-weight:600;color:var(--c2);margin-bottom:6px">解法：主动型 Description</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">不是写一段中性描述，而是<strong>主动列举同义词和关联场景</strong>。然后用自动化引擎测试实际触发率，迭代优化。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">四步优化流程</div>
+    <div class="layers">
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label">步骤 1 — 生成评估查询</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2);line-height:1.6">
+          <strong>8-10 个应触发</strong>（不同措辞、正式/随意、边缘场景）+ <strong>8-10 个不应触发</strong>（近邻域、关键词重叠但意图不同）= 共 20 个查询。<br><br>
+          <span style="color:var(--c3)">关键要求：必须真实且具体。</span>官方明确区分好坏示例：
+          <div class="grid2" style="margin-top:8px">
+            <div style="padding:8px;background:rgba(248,113,113,0.04);border:1px solid rgba(248,113,113,0.15);border-radius:6px">
+              <div style="font-size:10px;color:var(--c4);font-weight:600;margin-bottom:4px">坏的查询</div>
+              <div style="font-size:11px;color:var(--text3)">"格式化这些数据"、"提取 PDF 文本"</div>
+            </div>
+            <div style="padding:8px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.15);border-radius:6px">
+              <div style="font-size:10px;color:var(--c2);font-weight:600;margin-bottom:4px">好的查询</div>
+              <div style="font-size:11px;color:var(--text3)">"老板发了个 xlsx 叫'Q4销售终稿v2.xlsx'，让我加一列利润率百分比…"</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(52,211,153,0.04)">
+        <div class="layer-label">步骤 2 — 用户审查</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2);line-height:1.6">
+          生成一个交互式 HTML 页面，用户可以：编辑查询、切换是否应触发开关、增删条目。用户确认后才进入优化循环。<br>
+          <span style="color:var(--c1)">这一步不可跳过——"坏的评估查询导致坏的描述"。</span>
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(245,158,11,0.04)">
+        <div class="layer-label">步骤 3 — 自动优化循环（run_loop.py）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2);line-height:1.6">
+          <div style="margin-bottom:8px">
+            <span class="tag tag-c2">60% 训练集</span> <span class="tag tag-c1">40% 留出测试集</span> <span class="tag tag-c3">最多 5 轮</span> <span class="tag tag-c5">每查询重复 3 次</span>
+          </div>
+          每轮：在训练集上评估当前 description → Claude 提出改进建议 → 新 description 在训练 + 测试集上评估 → <strong>按测试集得分（非训练集）选最佳</strong><br><br>
+          <span style="color:var(--c2)">为什么用测试集得分选择？防止过拟合——description 可能"背下来"训练查询但泛化能力差。</span>
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(167,139,250,0.04)">
+        <div class="layer-label">步骤 4 — 应用结果</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2);line-height:1.6">
+          从 JSON 输出中取出 best_description（最佳描述），更新 SKILL.md 的 YAML frontmatter（元数据区）。向用户展示修改前后对比 + 各轮得分。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">触发机制的本质</div>
+    <div class="src-box">Skills appear in Claude's available_skills list with their name + description,
+and Claude decides whether to consult a skill based on that description.
+
+The important thing: Claude only consults skills for tasks it can't easily handle
+on its own — simple, one-step queries may not trigger a skill even if the
+description matches perfectly.</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】Skill 出现在 Claude 的可用列表中，带有名称和描述，Claude 根据描述决定是否使用。重要的一点：Claude 只在任务自己处理不了时才使用 Skill——简单的单步查询即使描述完全匹配也不会触发。</div>
+    <div class="quote">Skill 触发的底层逻辑：Claude 的决策不是"描述是否匹配"，而是<strong style="color:var(--text)">"我需要帮助吗？"</strong>。"读一下这个文件"不会触发——无论 description 写得多好。评估查询必须<strong>足够复杂</strong>才能测出真实的触发行为。</div>
+  </div>
+
+  <!-- WHY: Why ML-style train/test split -->
+  <div class="card" style="border-color:rgba(167,139,250,0.2)">
+    <div class="card-title"><span class="icon" style="background:rgba(167,139,250,0.2);color:var(--c5)">?</span> 为什么用机器学习的训练/测试分割来优化 Description？</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">这是整个 skill-creator 中最"学术"的设计决策。为什么不用更直觉的方式——比如人工看触发结果然后手动调 description？</p>
+
+    <div class="grid2">
+      <div style="padding:14px;border-radius:8px;background:rgba(248,113,113,0.04);border:1px solid rgba(248,113,113,0.15)">
+        <div style="font-size:12px;font-weight:600;color:var(--c4);margin-bottom:6px">直觉方式的问题</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          人看 3-5 个触发结果 → 调 description → 再看 3-5 个<br><br>
+          <strong>过拟合风险极高：</strong>你会不自觉地让 description 精确匹配你手头这几个查询。但真实用户的措辞千变万化——description "背下来"了测试查询，遇到新查询反而不触发。
+        </div>
+      </div>
+      <div style="padding:14px;border-radius:8px;background:rgba(52,211,153,0.04);border:1px solid rgba(52,211,153,0.15)">
+        <div style="font-size:12px;font-weight:600;color:var(--c2);margin-bottom:6px">训练/测试分割的解决方案</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          60% 查询用于"训练"（指导改进方向），40% 查询完全不看（纯测试泛化能力）。<br><br>
+          <strong>最终按测试集得分选择</strong>——如果 description 在训练集上满分但测试集不及格，说明它过拟合了，直接淘汰。这是一个从机器学习领域借用的<strong>通用防过拟合原则</strong>。
+        </div>
+      </div>
+    </div>
+
+    <div class="quote" style="margin-top:12px">
+      <strong style="color:var(--text)">工程洞察：</strong>为什么是 60/40 而不是 80/20？因为只有 20 个查询——80% 训练 = 16 个，测试只有 4 个，统计意义不够。60/40 = 12 训练 + 8 测试，是<strong>小样本下最务实的平衡</strong>。为什么最多 5 轮？因为 20 个查询的信息量有限——超过 5 轮迭代就是在噪声上拟合。
+    </div>
+  </div>
+</div>
+
+<!-- ==================== S6: 子代理体系 ==================== -->
+<div class="section" id="s6">
+  <div class="section-title">子代理协作体系</div>
+  <div class="section-sub">三个独立角色，各有明确职责边界——Grader 评分、Analyzer 分析、Comparator 盲审。</div>
+
+  <div class="card">
+    <div class="card-title">三角色关系图</div>
+    <div class="diagram" style="text-align:center">
+      <div style="display:inline-flex;flex-direction:column;gap:16px;text-align:left">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="padding:12px 20px;border-radius:8px;background:rgba(248,113,113,0.06);border:1px solid rgba(248,113,113,0.2);min-width:140px">
+            <div style="font-size:13px;font-weight:600;color:var(--c4)">Grader（评分员）</div>
+            <div style="font-size:11px;color:var(--text3)">agents/grader.md</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2)">每次评估运行都调用<br><span style="color:var(--text3)">→ 评分 + 深度验证</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="padding:12px 20px;border-radius:8px;background:rgba(167,139,250,0.06);border:1px solid rgba(167,139,250,0.2);min-width:140px">
+            <div style="font-size:13px;font-weight:600;color:var(--c5)">Analyzer（分析师）</div>
+            <div style="font-size:11px;color:var(--text3)">agents/analyzer.md</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2)">两处调用：<br>① 基准模式检测<br>② 盲审后分析"为什么赢了"<br><span style="color:var(--text3)">→ 表面数字下隐藏的模式</span></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="padding:12px 20px;border-radius:8px;background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.2);min-width:140px">
+            <div style="font-size:13px;font-weight:600;color:var(--c1)">Comparator（盲审员）</div>
+            <div style="font-size:11px;color:var(--text3)">agents/comparator.md</div>
+          </div>
+          <div style="font-size:12px;color:var(--text2)">可选的高级功能<br><span style="color:var(--text3)">→ 盲审 A/B 产出，不知哪个是哪个</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="quote">每个子代理是<strong style="color:var(--text)">独立上下文</strong>。Grader 看不到 Analyzer 的分析，Comparator 不知道 A/B 哪个是新版。信息隔离确保判断客观。</div>
+  </div>
+
+  <!-- WHY: Why 3 separate subagents -->
+  <div class="card" style="border-color:rgba(6,182,212,0.25)">
+    <div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.2);color:var(--c1)">?</span> 为什么是 3 个独立子代理而不是 1 个"全能评审员"？</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">一个更直觉的设计是：让一个代理同时负责评分、分析、对比。为什么 Anthropic 把它拆成三个独立角色？</p>
+
+    <div style="border-left:3px solid var(--c1);padding:14px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:4px">原因 1：信息隔离 = 消除确认偏差</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        如果 Grader 知道 Analyzer 的结论是"Skill B 更好"，它在评分时会不自觉地偏向 B。独立上下文意味着<strong>每个代理基于原始数据做判断，不受其他代理的结论污染</strong>。这是科学实验中"双盲"原则的直接应用。
+      </div>
+    </div>
+
+    <div style="border-left:3px solid var(--c1);padding:14px 16px;margin-bottom:12px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:4px">原因 2：不同任务需要不同的思维模式</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        Grader 需要<strong>严格、微观、逐条</strong>——像质检员。Analyzer 需要<strong>宏观、模式识别</strong>——像数据科学家。Comparator 需要<strong>主观、整体</strong>——像用户。这三种思维模式如果塞进同一个 prompt，模型会在"严格"和"灵活"之间反复切换，降低每项的执行质量。
+      </div>
+    </div>
+
+    <div style="border-left:3px solid var(--c1);padding:14px 16px;background:rgba(6,182,212,0.03);border-radius:0 8px 8px 0">
+      <div style="font-size:12px;font-weight:600;color:var(--c1);margin-bottom:4px">原因 3：可选性和渐进式复杂度</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        Grader 是核心（每次评估都用），Analyzer 是增强（检测模式），Comparator 是可选（盲审）。拆成三个意味着用户可以<strong>渐进式采用</strong>：先用 Grader，需要更深入分析时加 Analyzer，需要严格 A/B 对比时加 Comparator。如果合成一个"全能评审员"，就是全有或全无。
+      </div>
+    </div>
+
+    <div class="quote" style="margin-top:12px">
+      <strong style="color:var(--text)">你的 Skill 借鉴点：</strong>如果你需要多角度评估，不要写一个巨型 prompt——拆成独立角色，每个有自己的专用 prompt。这在 prompt 工程中叫做<strong>"角色隔离模式"（Role Isolation Pattern）</strong>。
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(248,113,113,0.15);color:var(--c4)">1</span>Grader：超越简单评分的三层验证</div>
+    <div class="layers">
+      <div class="layer" style="background:rgba(52,211,153,0.04)">
+        <div class="layer-label">第一层 · 预设断言验证</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">对每条预期：搜证 → 判定通过/失败 → 引用具体证据。要求"反映真实实质而非表面合规"——文件存在且内容正确，不只文件名对。</div>
+      </div>
+      <div class="layer" style="background:rgba(245,158,11,0.04)">
+        <div class="layer-label">第二层 · 隐性声明提取与验证</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">从产出中主动提取<strong>未预设的声明</strong>（"表单有 12 个字段"、"用了 pypdf 填表"）并独立验证。能捕捉预设断言漏掉的问题。</div>
+      </div>
+      <div class="layer" style="background:rgba(248,113,113,0.04)">
+        <div class="layer-label">第三层 · 评估本身的质量审查（反噬）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">反向审查断言是否太弱（"通过但错误输出也会通过"）或太窄（"重要结果没有断言覆盖"）。<strong>反噬评估自身</strong>——Fail-Closed 原则的极致。</div>
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--c4);margin-bottom:6px">Fail-Closed（失败即关闭）原则：</div>
+      <div class="src-box" style="margin:0">When uncertain: The burden of proof to pass is on the expectation.
+PASS when: Clear evidence + reflects genuine substance
+FAIL when: No evidence / contradicted / cannot verify / superficial / coincidental</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】不确定时：通过的举证责任在预期方。通过条件：清晰证据 + 反映真实实质。失败条件：无证据/被反驳/无法验证/表面的/巧合的。</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(167,139,250,0.15);color:var(--c5)">2</span>Analyzer：两种工作模式</div>
+    <div class="grid2">
+      <div style="padding:14px;border-radius:8px;background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.15)">
+        <div style="font-size:12px;font-weight:600;color:var(--c5);margin-bottom:6px">模式 A：基准分析</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          检测 5 种断言模式：<br>
+          ① <span style="color:var(--c2)">总是通过</span> → 不区分能力，可能没用<br>
+          ② <span style="color:var(--c4)">总是失败</span> → 可能坏了<br>
+          ③ <span style="color:var(--c2)">有 Skill 通过 → 无 Skill 失败</span> → Skill 有价值<br>
+          ④ <span style="color:var(--c4)">有 Skill 失败 → 无 Skill 通过</span> → Skill 可能有负作用<br>
+          ⑤ <span style="color:var(--c3)">高方差</span> → 可能不稳定
+        </div>
+      </div>
+      <div style="padding:14px;border-radius:8px;background:rgba(167,139,250,0.04);border:1px solid rgba(167,139,250,0.15)">
+        <div style="font-size:12px;font-weight:600;color:var(--c5);margin-bottom:6px">模式 B：事后分析</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          盲审出胜者后，"开箱"分析为什么：<br>
+          ① 比较两个 Skill 的结构差异<br>
+          ② 比较两次执行的记录<br>
+          ③ 给指令遵循度打分<br>
+          ④ 生成优先级排序的改进建议<br>
+          <span style="color:var(--c5)">→ 从 A/B 结果中提炼可操作的洞察</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.15);color:var(--c1)">3</span>Comparator：盲审的严谨性</div>
+    <div class="src-box">give two outputs to an independent agent without telling it which is which,
+and let it judge quality. Then analyze why the winner won.</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:6px">【译文】把两个产出给一个独立代理，不告诉它哪个是哪个，让它评判质量。然后分析为什么赢家赢了。</div>
+    <div class="quote">盲审的价值：消除了"新版本一定更好"的确认偏差。有时候新版本实际上更差——只有盲审能发现这一点。</div>
+    <p style="font-size:12px;color:var(--text3);margin-top:8px">官方注释："可选的，需要子代理，大多数用户不需要。人工审查循环通常就够了。"</p>
+  </div>
+</div>
+
+<!-- ==================== S7: 跨环境适配 ==================== -->
+<div class="section" id="s7">
+  <div class="section-title">跨环境适配</div>
+  <div class="section-sub">同一份 485 行的 SKILL.md 如何在三个不同环境中运行——90% 逻辑共享 + 10% 环境特异。</div>
+
+  <div class="card">
+    <div class="card-title">三种环境的能力差异</div>
+    <table class="info-table">
+      <tr><th>能力</th><th style="color:var(--c1)">Claude Code</th><th style="color:var(--c3)">Claude.ai</th><th style="color:var(--c5)">Cowork</th></tr>
+      <tr><td>子代理</td><td style="color:var(--c2)">✓ 完整支持</td><td style="color:var(--c4)">✗ 不支持</td><td style="color:var(--c2)">✓ 支持</td></tr>
+      <tr><td>并行执行</td><td style="color:var(--c2)">✓ 支持</td><td style="color:var(--c4)">✗ 串行</td><td style="color:var(--c2)">✓ 支持</td></tr>
+      <tr><td>浏览器/显示</td><td style="color:var(--c2)">✓ 支持</td><td style="color:var(--c3)">有限</td><td style="color:var(--c4)">✗ 无</td></tr>
+      <tr><td>claude CLI</td><td style="color:var(--c2)">✓ 有</td><td style="color:var(--c4)">✗ 无</td><td style="color:var(--c2)">✓ 有</td></tr>
+      <tr><td>基线对比</td><td style="color:var(--c2)">✓ 完整</td><td style="color:var(--c4)">✗ 跳过</td><td style="color:var(--c2)">✓ 完整</td></tr>
+      <tr><td>Description 优化</td><td style="color:var(--c2)">✓ run_loop.py</td><td style="color:var(--c4)">✗ 跳过</td><td style="color:var(--c2)">✓ 支持</td></tr>
+      <tr><td>盲审对比</td><td style="color:var(--c2)">✓ 支持</td><td style="color:var(--c4)">✗ 跳过</td><td style="color:var(--c2)">✓ 支持</td></tr>
+      <tr><td>评估查看器</td><td style="color:var(--c2)">启动服务器</td><td style="color:var(--c3)">对话中展示</td><td style="color:var(--c3)">静态 HTML 文件</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">适配策略：渐进降级</div>
+    <div class="layers">
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label">Claude Code（完整能力）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">子代理并行执行 → 完整的评估循环 → 浏览器查看器 → 人工审查反馈 → 迭代改进。这是设计时的"完整版"。</div>
+      </div>
+      <div class="layer" style="background:rgba(245,158,11,0.04)">
+        <div class="layer-label">Claude.ai（无子代理）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          串行执行测试（自己同时扮演 Skill 创作者和执行者）→ 跳过基线对比 → 在对话中展示结果 → 用户内联反馈。<br>
+          <span style="color:var(--c3)">关键妥协：自己测试自己写的 Skill 有确认偏差，但人工审查步骤弥补了这一点。</span>
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(167,139,250,0.04)">
+        <div class="layer-label">Cowork（无浏览器）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          子代理可用 → 完整评估循环 → 但用 <code style="font-size:11px;background:rgba(255,255,255,0.05);padding:1px 4px;border-radius:3px">--static</code> 生成静态 HTML 而非启动服务器 → 反馈通过文件下载收集。<br>
+          <span style="color:var(--c4)">特殊问题：Claude 倾向跳过评估查看器 → 官方用了全文唯一的全大写来强制。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">工程启示：你自己的 Skill 如何做跨环境？</div>
+    <div class="principle">
+      <div class="principle-num">1</div>
+      <div class="principle-body">
+        <div class="principle-title">先写完整版，再降级</div>
+        <div class="principle-desc">先为能力最强的环境（Claude Code）设计完整流程，然后逐个环境分析缺失能力，提供替代方案。不要一开始就写"最简版"。</div>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">2</div>
+      <div class="principle-body">
+        <div class="principle-title">90% 逻辑共享，10% 环境特异</div>
+        <div class="principle-desc">skill-creator 把环境特异内容集中在末尾的独立段落中。正文 90% 对所有环境通用，只有运行方式（并行/串行、查看器类型等）不同。这种结构让维护成本最低。</div>
+      </div>
+    </div>
+    <div class="principle">
+      <div class="principle-num">3</div>
+      <div class="principle-body">
+        <div class="principle-title">对关键流程步骤用全大写强制</div>
+        <div class="principle-desc">只在"模型可能跳过关键步骤"的地方用全大写。skill-creator 在 Cowork 中用全大写强制"先生成查看器"，因为这是流程正确性的保障，不是质量标准。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== S8: 实战框架 ==================== -->
+<div class="section" id="s8">
+  <div class="section-title">自造 Skill 实战框架</div>
+  <div class="section-sub">从 skill-creator 中提炼可直接套用的工程工具箱——如何把工作流型、评估循环、子代理协作组装到你的 Skill 中</div>
+
+  <!-- Part 1: What skill-creator teaches that others don't -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--c3)">0</span> skill-creator 独有的工程模式（其他 Skill 没有的）</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">frontend-design 教你"如何约束"，pdf 教你"如何注入知识"，但只有 skill-creator 教你以下模式：</p>
+    <table class="info-table">
+      <tr><th>#</th><th>模式</th><th>一句话描述</th><th>你什么时候需要</th></tr>
+      <tr><td>1</td><td style="color:var(--text)">评估循环</td><td>测试 → 评分 → 人工审查 → 改进 → 重测</td><td>你的 Skill 产出可客观验证时</td></tr>
+      <tr><td>2</td><td style="color:var(--text)">含技能 + 基线并行</td><td>加载 Skill 和不加载 Skill 同时跑，对比效果</td><td>你需要证明 Skill 真的有用时</td></tr>
+      <tr><td>3</td><td style="color:var(--text)">Grader 三层验证</td><td>预设断言 → 隐性声明 → 评估反噬</td><td>你需要严格验证输出质量时</td></tr>
+      <tr><td>4</td><td style="color:var(--text)">Fail-Closed 思想</td><td>不确定时默认失败，通过的举证在预期方</td><td>你的 Skill 处理高风险任务时</td></tr>
+      <tr><td>5</td><td style="color:var(--text)">训练/测试集分割</td><td>60% 训练 + 40% 留出，按测试集选最佳</td><td>你优化 Description 或任何可迭代参数时</td></tr>
+      <tr><td>6</td><td style="color:var(--text)">渐进式披露</td><td>元数据（100 词）→ 正文（500 行）→ 资源（按需）</td><td>你的 Skill 内容超过 500 行时</td></tr>
+      <tr><td>7</td><td style="color:var(--text)">跨环境渐进降级</td><td>完整版 → 功能缩减版 → 最小可用版</td><td>你的 Skill 需要在多个平台运行时</td></tr>
+      <tr><td>8</td><td style="color:var(--text)">"解释为什么"写作风格</td><td>用心智理论和元认知提示代替强硬命令</td><td>你的 Skill 产出有评估兜底时</td></tr>
+    </table>
+  </div>
+
+  <!-- Part 2: How to build your own eval system -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(6,182,212,0.15);color:var(--c1)">1</span> 实战：如何为你的 Skill 搭建评估系统</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">从 skill-creator 的评估循环中提炼的<strong style="color:var(--text)">最小可用评估方案</strong>——不需要 9 个 Python 脚本，只需要核心思路：</p>
+
+    <div style="display:flex;flex-direction:column;gap:0">
+      <div style="padding:16px 18px;border:1px solid rgba(52,211,153,0.2);border-radius:var(--r) var(--r) 0 0;background:rgba(52,211,153,0.04)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:700;color:var(--c2);font-family:var(--font-mono)">步骤 1</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">写 3 个真实测试提示词</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          不是"测试这个 Skill"，而是真实用户会说的话。参考 skill-creator 的好/坏查询对比。<br>
+          <span style="color:var(--c3)">关键：查询越具体越好——包含文件名、上下文、用户背景。</span>
+        </div>
+      </div>
+      <div style="padding:16px 18px;border:1px solid rgba(245,158,11,0.2);border-left:1px solid rgba(52,211,153,0.2);border-right:1px solid rgba(52,211,153,0.2);background:rgba(245,158,11,0.04)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:700;color:var(--c3);font-family:var(--font-mono)">步骤 2</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">为每个测试写 2-3 条可验证的断言</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          断言必须可客观判定通过/失败，不含主观判断。<br>
+          <span style="color:var(--c2)">好的断言：</span>"输出的 CSV 包含'profit_margin'列且值为百分比"<br>
+          <span style="color:var(--c4)">坏的断言：</span>"输出的 CSV 看起来很专业"
+        </div>
+      </div>
+      <div style="padding:16px 18px;border:1px solid rgba(6,182,212,0.2);border-left:1px solid rgba(245,158,11,0.2);border-right:1px solid rgba(245,158,11,0.2);background:rgba(6,182,212,0.04)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:700;color:var(--c1);font-family:var(--font-mono)">步骤 3</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">含/不含 Skill 各跑一次，对比结果</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          用 skill-creator 的含技能/基线并行模式——只有对比才能证明 Skill 真的有价值。<br>
+          <span style="color:var(--text3)">即使不用脚本，手动跑两次并记录差异也行。</span>
+        </div>
+      </div>
+      <div style="padding:16px 18px;border:1px solid rgba(167,139,250,0.2);border-radius:0 0 var(--r) var(--r);background:rgba(167,139,250,0.04)">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:700;color:var(--c5);font-family:var(--font-mono)">步骤 4</span>
+          <span style="font-size:13px;font-weight:600;color:var(--text)">让人看结果 → 收集反馈 → 改进 → 重测</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6">
+          skill-creator 的核心洞察：<strong>自动化评估 + 人工审查</strong>缺一不可。<br>
+          <span style="color:var(--c5)">自动化能发现"对不对"，人工能发现"好不好"。</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Part 3: Progressive Disclosure practical guide -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(52,211,153,0.15);color:var(--c2)">2</span> 渐进式披露：你的 Skill 超过 500 行怎么办</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">skill-creator 在 SKILL.md 第 86-109 行定义了三层加载系统。这对你的复合型 Skill 至关重要：</p>
+    <div class="layers">
+      <div class="layer" style="background:rgba(248,113,113,0.04)">
+        <div class="layer-label">第 1 层 · 元数据（始终加载，约 100 词）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          name + description。这是<strong>触发决策</strong>的唯一依据。无论 Skill 多复杂，这一层必须精炼到 100 词以内。<br>
+          <span style="color:var(--c1)">你的操作：把触发相关的信息全部压进 description，不要放到正文里。</span>
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(245,158,11,0.04)">
+        <div class="layer-label">第 2 层 · SKILL.md 正文（触发后加载，理想 < 500 行）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          核心指令——工作流步骤、约束规则、写作风格要求。如果超过 500 行，说明你需要第 3 层。<br>
+          <span style="color:var(--c3)">你的操作：正文中只放"做什么"和"怎么做"的指令，把"详细参考资料"移到 REFERENCE.md。</span>
+        </div>
+      </div>
+      <div class="layer" style="background:rgba(6,182,212,0.04)">
+        <div class="layer-label">第 3 层 · 资源文件（按需加载，无限量）</div>
+        <div class="layer-content" style="font-size:12px;color:var(--text2)">
+          REFERENCE.md（知识库）、scripts/（自动化脚本）、assets/（模板/图标）。模型只在需要时读取，脚本可以执行而不需要加载内容。<br>
+          <span style="color:var(--c2)">你的操作：在正文中明确标注"当你需要处理 AWS 部署时，读 references/aws.md"——给模型清晰的导航。</span>
+        </div>
+      </div>
+    </div>
+    <div class="quote">
+      <strong style="color:var(--text)">实战原则：</strong>第 1 层决定"是否触发"，第 2 层决定"怎么执行"，第 3 层提供"需要的知识/工具"。如果你的 Skill 在第 2 层就超过 500 行，检查是否有内容可以下沉到第 3 层。
+    </div>
+  </div>
+
+  <!-- Part 4: Composite skill scenarios -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(167,139,250,0.15);color:var(--c5)">3</span> 复合型 Skill 组装实战场景</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">以下场景展示如何把 skill-creator 的模式与其他 Skill 的模式组合：</p>
+
+    <div style="padding:16px;border-radius:var(--r);border:1px solid rgba(52,211,153,0.2);background:rgba(52,211,153,0.03);margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;color:var(--c2);margin-bottom:8px">场景 A：API 接口自动化测试生成器</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+        <strong style="color:var(--text)">需求：</strong>读取 API 定义 → 自动生成测试用例 → 运行测试 → 生成报告。
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+        <strong style="color:var(--text)">组合方案：</strong>
+      </div>
+      <table class="info-table">
+        <tr><th>需要的能力</th><th>来源</th><th>具体做法</th></tr>
+        <tr><td>多步骤流程控制</td><td><span class="tag tag-c1">skill-creator</span></td><td>工作流型正文：解析 → 生成 → 运行 → 报告，用时序强制词控制顺序</td></tr>
+        <tr><td>API 知识注入</td><td><span class="tag tag-c2">pdf / claude-api</span></td><td>REFERENCE.md 存放测试框架文档和 API 规范</td></tr>
+        <tr><td>输出质量验证</td><td><span class="tag tag-c1">skill-creator</span></td><td>借用 Grader 的断言验证模式——测试用例是否覆盖所有端点</td></tr>
+        <tr><td>报告排版控制</td><td><span class="tag tag-c3">frontend-design</span></td><td>在正文末尾加排版约束（NEVER 用默认字体、配色枚举）</td></tr>
+      </table>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:8px">
+        <strong style="color:var(--text)">关键决策：</strong>产出可客观验证（测试是否通过）→ 写作风格用"解释为什么"。有人工审查环节（用户确认测试用例是否合理）→ 生成查看器 HTML。
+      </div>
+    </div>
+
+    <div style="padding:16px;border-radius:var(--r);border:1px solid rgba(6,182,212,0.2);background:rgba(6,182,212,0.03);margin-bottom:12px">
+      <div style="font-size:13px;font-weight:600;color:var(--c1);margin-bottom:8px">场景 B：数据管道配置器</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+        <strong style="color:var(--text)">需求：</strong>用户描述数据流 → Skill 生成 ETL 管道配置 → 验证配置正确性 → 部署。
+      </div>
+      <table class="info-table">
+        <tr><th>需要的能力</th><th>来源</th><th>具体做法</th></tr>
+        <tr><td>意图捕获（4 问法）</td><td><span class="tag tag-c1">skill-creator</span></td><td>做什么/何时触发/输出格式/需要测试吗——同样的访谈框架</td></tr>
+        <tr><td>多环境适配</td><td><span class="tag tag-c1">skill-creator</span></td><td>按 skill-creator 的跨环境段落模式：90% 共享 + 10% 特异</td></tr>
+        <tr><td>配置验证脚本</td><td><span class="tag tag-c5">skill-creator</span></td><td>scripts/ 放验证脚本（黑盒模式——模型不需要读代码内容）</td></tr>
+        <tr><td>渐进式披露</td><td><span class="tag tag-c1">skill-creator</span></td><td>正文放核心流程，references/ 放各平台（Airflow/dbt/Fivetran）的具体配置模板</td></tr>
+      </table>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:8px">
+        <strong style="color:var(--text)">关键决策：</strong>这是 skill-creator 的"领域组织"模式的直接应用——正文放通用流程，references/ 按平台分文件。
+      </div>
+    </div>
+
+    <div style="padding:16px;border-radius:var(--r);border:1px solid rgba(248,113,113,0.2);background:rgba(248,113,113,0.03)">
+      <div style="font-size:13px;font-weight:600;color:var(--c4);margin-bottom:8px">场景 C：合同审查助手</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:8px">
+        <strong style="color:var(--text)">需求：</strong>用户上传合同 → Skill 提取关键条款 → 标记风险点 → 生成审查建议。
+      </div>
+      <table class="info-table">
+        <tr><th>需要的能力</th><th>来源</th><th>具体做法</th></tr>
+        <tr><td>领域知识注入</td><td><span class="tag tag-c2">pdf</span></td><td>REFERENCE.md 存放合同法要点、常见风险条款清单</td></tr>
+        <tr><td>质量验证（高风险）</td><td><span class="tag tag-c1">skill-creator</span></td><td>Fail-Closed 原则——不确定时标记为"需人工复核"而非忽略</td></tr>
+        <tr><td>写作风格</td><td><span class="tag tag-c3">混合</span></td><td>对风险标记用 NEVER（"绝对不要自动删除标记"），对审查建议用"解释为什么"</td></tr>
+        <tr><td>人工审查</td><td><span class="tag tag-c1">skill-creator</span></td><td>生成审查查看器，让法务确认 AI 的风险标记是否合理</td></tr>
+      </table>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:8px">
+        <strong style="color:var(--text)">关键决策：</strong>高风险场景 → Fail-Closed 原则。参考 Grader 的"通过的举证在预期方"——AI 标记的"安全"条款必须提供证据，否则默认标记为"待确认"。
+      </div>
+    </div>
+  </div>
+
+  <!-- Part 5: Quick reference -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(245,158,11,0.15);color:var(--c3)">4</span> 速查卡：从 skill-creator 提炼的 8 条可复用规则</div>
+    <table class="info-table">
+      <tr><th>#</th><th>规则</th><th>一句话描述</th><th>何时使用</th></tr>
+      <tr><td>1</td><td style="color:var(--text)">"解释为什么"风格</td><td>用元认知提示代替强硬命令，让模型理解背后的原因</td><td>产出有评估兜底时</td></tr>
+      <tr><td>2</td><td style="color:var(--text)">评估循环</td><td>测试 → 评分 → 人工审查 → 改进，直到满意</td><td>产出可客观验证时</td></tr>
+      <tr><td>3</td><td style="color:var(--text)">含技能/基线并行</td><td>加载和不加载 Skill 同时跑，证明 Skill 有价值</td><td>需要证明效果时</td></tr>
+      <tr><td>4</td><td style="color:var(--text)">Fail-Closed</td><td>不确定时默认失败，通过的举证在预期方</td><td>高风险任务时</td></tr>
+      <tr><td>5</td><td style="color:var(--text)">训练/测试集分割</td><td>60% 训练 + 40% 测试，按测试集得分选最佳</td><td>优化可迭代参数时</td></tr>
+      <tr><td>6</td><td style="color:var(--text)">渐进式披露</td><td>元数据（100 词）→ 正文（500 行）→ 资源（按需）</td><td>Skill 内容超过 500 行时</td></tr>
+      <tr><td>7</td><td style="color:var(--text)">跨环境渐进降级</td><td>完整版 → 功能缩减版 → 最小可用版</td><td>多平台运行时</td></tr>
+      <tr><td>8</span></td><td style="color:var(--text)">等待时并行工作</td><td>后台运行时，前台和用户讨论断言设计</td><td>有异步等待环节时</td></tr>
+    </table>
+  </div>
+
+  <!-- Part 6: Pitfalls -->
+  <div class="card">
+    <div class="card-title"><span class="icon" style="background:rgba(248,113,113,0.15);color:var(--c4)">5</span> 模式组合的陷阱与对策</div>
+    <div style="margin-bottom:12px;padding:14px;border-radius:8px;border:1px solid rgba(248,113,113,0.15);background:rgba(248,113,113,0.03)">
+      <div style="font-size:12px;font-weight:600;color:var(--c4);margin-bottom:4px">陷阱 1：为所有 Skill 强加评估循环</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        学了 skill-creator 的评估循环后，你可能想给每个 Skill 都加。但主观产出（设计、文案）的评估循环是伪科学——断言要么太严格（拒绝好作品），要么太宽松（放过差作品）。<br>
+        <span style="color:var(--c2)">→ 对策：参考"评估循环 vs 负面约束"对照表（本页第 1 节）。主观产出用负面约束，客观产出用评估循环。</span>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;padding:14px;border-radius:8px;border:1px solid rgba(248,113,113,0.15);background:rgba(248,113,113,0.03)">
+      <div style="font-size:12px;font-weight:600;color:var(--c4);margin-bottom:4px">陷阱 2：过度信任"解释为什么"风格</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        "解释为什么"只在<strong>有评估兜底</strong>时才安全。如果你的 Skill 无评估、产出又高风险，温和的风格会让模型在危险的地方"自由发挥"。<br>
+        <span style="color:var(--c2)">→ 对策：用写作风格决策公式（第 3 页）。无评估 + 高风险 = 必须 NEVER。</span>
+      </div>
+    </div>
+    <div style="padding:14px;border-radius:8px;border:1px solid rgba(248,113,113,0.15);background:rgba(248,113,113,0.03)">
+      <div style="font-size:12px;font-weight:600;color:var(--c4);margin-bottom:4px">陷阱 3：渐进式披露变成"渐进式隐藏"</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">
+        把太多内容推到 REFERENCE.md 后，模型可能不知道什么时候该去读。skill-creator 的做法是"在正文中明确标注导航"——不是藏起来，而是给地图。<br>
+        <span style="color:var(--c2)">→ 对策：正文中每个 REFERENCE 引用都要说明<strong>什么时候读、读完做什么</strong>。不是"参见 references/aws.md"，而是"当用户要求部署到 AWS 时，读 references/aws.md 获取平台特定配置"。</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- wrap -->
+
+<script>
+document.querySelectorAll('.nav-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.s).classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>学习全景记录 — Anthropic 官方 Skill 架构设计</title>
+<style>
+:root {
+  --bg: #08080c;
+  --surface: rgba(255,255,255,0.03);
+  --surface-hover: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.06);
+  --text: #ededef;
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-tertiary: rgba(255,255,255,0.3);
+  --accent-1: #06b6d4;
+  --accent-2: #34d399;
+  --accent-gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --cyan-bg: rgba(6,182,212,0.06);
+  --amber-bg: rgba(251,191,36,0.06);
+  --green-bg: rgba(52,211,153,0.06);
+  --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+  --font-sans: -apple-system, 'Inter', system-ui, sans-serif;
+  --radius: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  line-height: 1.7;
+}
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 20% 10%, rgba(6,182,212,0.05), transparent),
+    radial-gradient(ellipse 500px 500px at 80% 60%, rgba(52,211,153,0.03), transparent);
+  pointer-events: none; z-index: 0;
+}
+.container { max-width: 780px; margin: 0 auto; padding: 48px 24px 80px; position: relative; z-index: 1; }
+
+/* 头部 */
+.header { text-align: center; margin-bottom: 40px; }
+.header h1 { font-size: 24px; font-weight: 700; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+.header p { font-size: 13px; color: var(--text-secondary); }
+
+/* 维度区块 */
+.dimension { margin-bottom: 32px; }
+.dim-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+.dim-title { font-size: 17px; font-weight: 600; }
+.dim-badge { display: inline-flex; padding: 3px 12px; border-radius: 100px; font-size: 11px; font-weight: 500; }
+.dim-badge.done { background: rgba(52,211,153,0.12); color: var(--green); }
+.dim-core-q { font-size: 12px; color: var(--text-secondary); margin-bottom: 12px; font-style: italic; }
+
+/* 学习项卡片 */
+.item-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 12px;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.item-card:hover { border-color: rgba(255,255,255,0.12); }
+
+.item-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+}
+.item-summary:hover { background: var(--surface-hover); }
+
+.item-chevron {
+  width: 18px; height: 18px; flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--text-tertiary);
+}
+.item-card.open .item-chevron { transform: rotate(90deg); }
+
+.item-icon {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 11px;
+  background: rgba(52,211,153,0.15); color: var(--green);
+}
+
+.item-title-wrap { flex: 1; }
+.item-title { font-size: 14px; font-weight: 500; }
+.item-title-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+.item-score {
+  font-size: 12px; font-family: var(--font-mono); color: var(--green);
+  background: rgba(52,211,153,0.1); padding: 2px 8px; border-radius: 4px; flex-shrink: 0;
+}
+
+/* 展开内容 */
+.item-detail {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.item-card.open .item-detail { max-height: 6000px; }
+
+.item-detail-inner {
+  padding: 0 18px 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* 讨论段落 */
+.discuss-section {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* 导师提问 */
+.discuss-question {
+  background: var(--cyan-bg);
+  border-left: 3px solid var(--accent-1);
+}
+.discuss-question .label { color: var(--accent-1); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+
+/* 学习者回答 */
+.discuss-answer {
+  background: var(--surface-hover);
+  border-left: 3px solid var(--text-tertiary);
+}
+.discuss-answer .label { color: var(--text-secondary); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+
+/* 错误/纠正 */
+.discuss-mistake {
+  background: var(--amber-bg);
+  border-left: 3px solid var(--amber);
+}
+.discuss-mistake .label { color: var(--amber); font-weight: 600; font-size: 11px; margin-bottom: 6px; }
+
+/* 最终沉淀 */
+.discuss-insight {
+  background: var(--green-bg);
+  border-left: 3px solid var(--green);
+}
+.discuss-insight .label { color: var(--green); font-weight: 600; font-size: 11px; margin-bottom: 6px; }
+
+/* 引用 */
+.source-quote {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 8px 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* 页脚 */
+.footer {
+  margin-top: 36px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<div class="header">
+  <h1>学习全景记录</h1>
+  <p>Anthropic 官方 Skill 架构设计 · 3 维度 · 12 学习项 · 完整讨论沉淀</p>
+  <p style="margin-top:6px; color: var(--text-tertiary);">点击任意学习项展开完整讨论过程</p>
+</div>
+
+<!-- ═══════════ 维度一 ═══════════ -->
+<div class="dimension">
+  <div class="dim-header">
+    <span class="dim-title">维度一：官方架构解剖学</span>
+    <span class="dim-badge done">7/7 已完成</span>
+  </div>
+  <div class="dim-core-q">SKILL.md 如何进行职责分离？如何通过约束避免 AI 味？</div>
+
+  <!-- 学习项 1 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">1. Progressive Disclosure（渐进式披露）</div>
+        <div class="item-title-sub">三层加载体系的设计原理</div>
+      </div>
+      <span class="item-score">85%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>假设你正在设计一个 Skill，目标是让 Claude 自动将 Figma 设计稿截图转化为可运行的前端代码。如果 SKILL.md 的总行数你只能写 300 行，你会怎么分配？哪些内容值得占大头，哪些应该被推到 REFERENCE.md 或 scripts/ 里去？</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你的回答</div>
+        <p>会分为四层：输入、分析、构建、校验。Input 层引导用户提供截图，Analysis 层通过 MCP 分析截图，Build 层根据 UI 规则构建 HTML，Verify 层通过 Playwright 截图对比，相似率超 80% 通过，否则调整重试。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>官方的 Progressive Disclosure 是一个三层加载体系：</p>
+        <div class="source-quote">
+          1. Metadata（name + description）— 始终在上下文中（~100 words）<br>
+          2. SKILL.md body — 触发时加载（&lt;500 行为理想）<br>
+          3. Bundled resources — 按需加载（无限制，scripts 可在不加载源码的情况下执行）
+        </div>
+        <p>关键约束：SKILL.md 不超过 500 行。Reference 文件超过 300 行时应包含目录。当 Skill 支持多个领域/框架时，在 references/ 下按变体组织，Claude 只读取相关的那个。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 2 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">2. Output Verifiability 与控制策略选择</div>
+        <div class="item-title-sub">什么时候用前置约束，什么时候用校验循环？</div>
+      </div>
+      <span class="item-score">85%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>官方 frontend-design 放弃了你设计的那种多轮校验循环，转而把篇幅投资在"编码前的审美约束"上。控制 Claude 输出质量，更有效的策略是"事后检验和纠正"，还是"事前把审美空间收窄到不可能出错"？为什么？</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">初始回答（后被纠正）</div>
+        <p>前置约束倾向于模型非常聪明能完全按约束执行，校验循环倾向于模型可能出错需把控。如果模型能力很强第一种效率更高，如果模型能力不稳定第二种效率更高。</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">导师反例</div>
+        <p>同一个 Anthropic 团队，在同一个仓库里，同时使用了两种策略：<br>• frontend-design：43 行，全是前置约束，零校验循环<br>• skill-creator：485 行，包含完整的校验闭环（subagent 测试 → grader 打分 → benchmark → 迭代）<br><br>既然底层都是同一个 Claude 模型，为什么用不同策略？</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你修正后的回答</div>
+        <p>产物属性决定策略。HTML 在设计时不固定反而是一种优势，需要发散式创造。Skill 是严谨的需要固定结构输出、标准化。选择标准取决于产物的属性，更偏向严谨还是创造。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>官方用词不是"creative vs. rigorous"，而是 <strong>"objectively verifiable vs. subjective"</strong>。</p>
+        <div class="source-quote">Skills with objectively verifiable outputs (file transforms, data extraction, code generation, fixed workflow steps) benefit from test cases. Skills with subjective outputs (writing style, art) often don't need them. — skill-creator SKILL.md</div>
+        <p>判断标准：<strong>你能不能写出一个机械的断言（assertion）来判断输出是否正确？</strong><br>• 能 → 投资校验循环（如 skill-creator 的 grader + benchmark 体系）<br>• 不能 → 投资前置约束（如 frontend-design 的审美红线）</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 3 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">3. Negative Constraint Pattern（负面约束模式）</div>
+        <div class="item-title-sub">用"绝对不要"清单对抗模型统计默认倾向</div>
+      </div>
+      <span class="item-score">80%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师引导</div>
+        <p>frontend-design 的约束里有一个精妙的二级策略——它用的是<strong>负面清单</strong>而非正面规定：不说"用什么字体"，而是说"绝对不要用 Inter、Roboto、Arial"。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>当"好设计"无法机械验证时，官方用<strong>列举反模式</strong>作为桥接技术：</p>
+        <div class="source-quote">
+          NEVER use generic AI-generated aesthetics like overused font families (Inter, Roboto, Arial, system fonts), cliched color schemes (particularly purple gradients on white backgrounds), predictable layouts and component patterns... — frontend-design SKILL.md
+        </div>
+        <p>负面约束的本质是<strong>对抗模型的统计默认倾向</strong>。Claude 生成前端代码时天然偏向 Inter、Roboto、紫色渐变等高频训练数据模式。温和的"请避免通用字体"无法覆盖这个强先验，需要用 NEVER 这种强信号来打破。同时，"NEVER converge on common choices (Space Grotesk, for example) across generations"确保每次生成都不同，避免模型收敛到某个"安全"选择。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 4 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">4. SKILL.md 写作风格</div>
+        <div class="item-title-sub">"解释 why" vs. 大写红线，何时用哪种？</div>
+      </div>
+      <span class="item-score">80%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>skill-creator 说"少用 MUST/NEVER，要解释 why"，但 frontend-design 却用了 CRITICAL、NEVER、IMPORTANT 大写强调。什么时候该用"解释原因"的软性风格，什么时候必须上大写的硬性红线？</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">初始回答（后被纠正）</div>
+        <p>对于明确的、约束性、易理解的规则用大写硬性红线，对于需 LLM 理解、推理的条件使用"解释原因"。背后的标准是内容是原则还是条件。</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">导师反例</div>
+        <p>frontend-design 里标了 <strong>CRITICAL</strong> 的是："Choose a clear conceptual direction"——这并不是一条"明确的、约束性的规则"，它很抽象、很主观。那为什么官方要给它标 CRITICAL？<br><br>反过来，skill-creator 里有一条很明确的规则："Keep SKILL.md under 500 lines"——一个完全可以量化的硬约束，但官方没有用大写 MUST 来强调。<br><br>一个抽象的主观要求标了 CRITICAL，一个可量化的硬约束反而平铺直叙。这和"明确规则用硬红线"矛盾了。</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你修正后的回答</div>
+        <p>产出是主观类的用大写，是可客观验证类的用解释原因。因为客观类的可以进行验证，主观类的主要用前置约束，所以需要大写强调。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>你把 Output Verifiability 和写作风格成功关联：</p>
+        <p><strong>主观产出无法后验验证 → 必须用更强的前置信号（大写红线）来收窄概率空间</strong><br><strong>客观产出可以后验验证 → 前置约束可以温和，因为错了能被检测到</strong></p>
+        <p>大写红线不仅仅是"强调"，它本质上是用来<strong>对抗模型的统计默认倾向</strong>。Claude 生成前端代码时天然偏向高频训练数据模式。温和的"请避免通用字体"无法覆盖这个强先验，需要用 NEVER 这种"认知冲击"来打破。500 行硬约束不需要大写强调，因为它可以客观检查。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 5 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">5. SKILL.md 完整解剖结构</div>
+        <div class="item-title-sub">Body 按工作流阶段还是知识类别组织？</div>
+      </div>
+      <span class="item-score">85%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>skill-creator 的 Body 按<strong>工作流阶段</strong>组织（Capture Intent → Write → Test → Improve），而 pdf 的 Body 按<strong>知识类别</strong>组织（Libraries → Tools → Tasks）。这两种组织方式分别适用于什么类型的 Skill？</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你的回答</div>
+        <p>分别适用于把 Skill 当作工具使用还是当作工作流使用。如果需要严格按照具体流程执行任务则选择"工作流阶段"，和流程无关、按需使用部分能力，则使用"知识类别"来组织 Body。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>这个区分本质上是维度二中"知识模式 vs. 确定性过程"在 SKILL.md Body 组织层面的投射：</p>
+        <p>• <strong>工作流阶段</strong>（skill-creator、mcp-builder）：Claude 需要按顺序执行步骤，Body 是指令序列。用户的任务天然是"从 A 走到 B"的流程。<br>• <strong>知识类别</strong>（pdf、claude-api）：Claude 需要按需挑选能力组合，Body 是参考手册。用户的任务每次不同，Claude 要自己判断用哪个工具。</p>
+        <p><strong>同一个 Skill 不应该同时混用两种组织方式。</strong>如果既有强流程又有大量参考知识，应该把知识下沉到 references/，Body 只保留工作流骨架。这正是 mcp-builder 的做法。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 6 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">6. Description 触发与优化机制</div>
+        <div class="item-title-sub">为什么 Description 被当作机器学习问题对待？</div>
+      </div>
+      <span class="item-score">80%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>官方花了大量工程力气（自动优化循环、train/test split、防止过拟合）来优化一个 description 字段。为什么它值得被当作一个"机器学习问题"来对待，而不是简单写一句话就完事？</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你的回答</div>
+        <p>守门员的角色，因为他决定了什么时候触发技能，如果技能都没有触发，无论技能设计得多好都没有用。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>"守门员"准确——不触发，一切归零。但更深层的答案是 <strong>recall vs. precision 的权衡</strong>。</p>
+        <div class="source-quote">Currently Claude has a tendency to "undertrigger" skills — to not use them when they'd be useful. — skill-creator SKILL.md</div>
+        <p>• Description 越宽泛 → 触发率越高 → 但可能误触发<br>• Description 越精确 → 误触发越少 → 但又回到 undertrigger 问题</p>
+        <p>Description 文本本质上是<strong>一个分类器的决策边界</strong>。如果把 20 个测试查询里的关键词全部塞进 description，train set 上得分高，但遇到新查询就失效——这就是过拟合。所以官方用 train/test split 选取 test score 最高的 description，而非 train score 最高的。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 7 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">7. 多领域变体与 Reference 文件架构</div>
+        <div class="item-title-sub">独立目录 vs. reference/ 平铺的判断标准</div>
+      </div>
+      <span class="item-score">80%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>claude-api 把每种语言作为独立的一级子目录（8个语言目录 + shared/），mcp-builder 把两种语言的实现指南放在 reference/ 下平铺。什么情况下用哪种？</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">初始回答（后被纠正）</div>
+        <p>如果是文档类的使用 claude-api 方式，如果是工具类的使用 mcp-builder 方式。</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">导师纠正</div>
+        <p>mcp-builder 的 reference/ 里也全是文档（TypeScript 指南、Python 指南），不是脚本。真正的区别在于数据量：claude-api 有 8 种语言 × 每种多个文件 = 30+ 个文件；mcp-builder 只有 2 种语言 × 每种一个文件 = 4 个文件。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>真正的判断变量是<strong>每个变体的内容量 × 变体总数</strong>：</p>
+        <p>• <strong>变体多 × 内容量大</strong> → 独立目录（claude-api 模式）。如果 8 种语言全放 reference/ 平铺会变成 30+ 个文件，Claude 找不到该读哪个。<br>• <strong>变体少 × 内容量小</strong> → reference/ 平铺（mcp-builder 模式）。4 个文件平铺完全够用。</p>
+        <p>这本质上是 Progressive Disclosure 的延伸——目录结构越复杂，Claude 需要越明确的导航信号来找到正确的文件。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+</div>
+
+<!-- ═══════════ 维度二 ═══════════ -->
+<div class="dimension">
+  <div class="dim-header">
+    <span class="dim-title">维度二：静态知识与动态工具的边界</span>
+    <span class="dim-badge done">1/1 已完成</span>
+  </div>
+  <div class="dim-core-q">哪些逻辑写在 Prompt 里，哪些下放给脚本？</div>
+
+  <!-- 学习项 8 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">8. Prompt vs. Code 边界法则</div>
+        <div class="item-title-sub">什么放 SKILL.md，什么放 scripts/——黑盒调用模式</div>
+      </div>
+      <span class="item-score">85%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>webapp-testing 中官方明确禁止 Claude 读脚本源码，让 Claude 只当调用者。什么逻辑该放 Prompt 里由 LLM 灵活执行，什么动作必须下放给底层代码工具执行？</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">初始回答（后被深化）</div>
+        <p>与当前流程、业务相关的内容放在 prompt 中，执行过程与中间产物与业务流程不相关的放在脚本中。背后的判断条件是：过程产物是否有助于 LLM 判断。</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">导师揭示的两个更根本考量</div>
+        <p><strong>考量一：Context Window 经济学。</strong>webapp-testing 禁止读源码的理由是"pollute your context window"。SKILL.md 每行在每次触发时都消耗 token 预算，脚本不会。<br><br><strong>考量二：确定性 vs. 判断力。</strong>pdf/SKILL.md 里内嵌了大量代码片段（教 Claude 怎么用 pypdf 等），webapp-testing 则禁止读脚本源码。前者是<strong>知识（Knowledge）</strong>，Claude 需要理解才能灵活应对；后者是<strong>确定性执行（Deterministic Execution）</strong>，不需要 Claude 理解内部实现。</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你的进一步回答</div>
+        <p>代码片段不封装成脚本是因为它们需要被理解之后灵活组合的知识。能够被固化的是重复性、固定参数、不要 LLM 进行理解只需要执行的内容。如果需要 LLM 进行理解、灵活运用，则是作为知识在 Skill 中。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p><strong>三层判断法则：</strong></p>
+        <p>1. <strong>Context Window 预算优先</strong>——SKILL.md 有 500 行硬约束<br>
+        2. <strong>确定性过程 → scripts</strong>——不需要 LLM 理解，只需调用的黑盒（如 with_server.py 管理服务器生命周期）<br>
+        3. <strong>知识模式 → SKILL.md/references</strong>——需要 LLM 理解后灵活组合的代码片段（如 pdf 库的使用模式）</p>
+        <p>关键区分：pdf 里的代码片段不是"确定性过程"，它们是<strong>需要被理解后按需组合的知识模式</strong>。当用户说"提取第 3-5 页表格转 CSV"时，Claude 需要从多个片段中挑选、组合、改参数。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+</div>
+
+<!-- ═══════════ 维度三 ═══════════ -->
+<div class="dimension">
+  <div class="dim-header">
+    <span class="dim-title">维度三：生产级防御与边界控制</span>
+    <span class="dim-badge done">4/4 已完成</span>
+  </div>
+  <div class="dim-core-q">如何处理 Edge Cases？如何确保安全审计和容错？</div>
+
+  <!-- 学习项 9 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">9. Context Window 溢出防御</div>
+        <div class="item-title-sub">四层递进防御体系</div>
+      </div>
+      <span class="item-score">85%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>官方有四种防御 Context Window 溢出的手段：① webapp-testing 的黑盒策略 ② skill-creator 的 500 行硬约束 ③ pdf 的分流策略 ④ claude-api 的语言检测分流。这四个案例是替代关系还是递进关系？为什么需要四种？</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你的回答</div>
+        <p>是层层递进的。解释性防御可能随着上下文增多而被忘记，强制约束保证加载内容始终不会很多，快速指引实现渐进性披露，限制加载逻辑保证渐进式披露。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>四层递进防御，每层防御不同的失效模式，覆盖内容从<strong>设计 → 加载 → 按需读取 → 执行</strong>的全生命周期：</p>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;margin-top:8px;">
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:6px 8px;color:var(--accent-1);font-weight:600;">层级</td>
+            <td style="padding:6px 8px;color:var(--accent-1);font-weight:600;">防御手段</td>
+            <td style="padding:6px 8px;color:var(--accent-1);font-weight:600;">防御的失效模式</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">结构预防</td><td style="padding:6px 8px;">500 行硬约束、目录分离</td><td style="padding:6px 8px;">Skill 作者把内容写太多</td></tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">路由过滤</td><td style="padding:6px 8px;">语言检测、项目文件探测</td><td style="padding:6px 8px;">Claude 加载了不需要的变体</td></tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:6px 8px;">指针分流</td><td style="padding:6px 8px;">"See REFERENCE.md"</td><td style="padding:6px 8px;">低频内容每次都占用 Context</td></tr>
+          <tr><td style="padding:6px 8px;">行为劝阻</td><td style="padding:6px 8px;">"DO NOT read the source"</td><td style="padding:6px 8px;">Claude 执行时好奇去读源码</td></tr>
+        </table>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 10 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">10. 跨平台/跨环境适配策略</div>
+        <div class="item-title-sub">单文件多环境 vs. 多文件单环境</div>
+      </div>
+      <span class="item-score">80%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>skill-creator 把 Claude Code / Claude.ai / Cowork 三种环境的适配逻辑全部写在一个 SKILL.md 里，而不是为每种环境写独立文件。为什么"单文件多环境"比"多文件单环境"更好？这和 Context Window 经济学是否矛盾？</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你的回答</div>
+        <p>单文件多环境更好，因为核心逻辑一样，只是受限的外部环境不同。Skill 本质只是 message 文本，LLM 可以根据文本进行推理理解。即使随着上下文增多可能被遗忘，也不对主流程造成很大影响。和 Context Window 不矛盾，反而更简洁，避免同一个功能写三次，避免不被触发或重复加载。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>三个关键理由：</p>
+        <p>• <strong>核心逻辑复用，差异点叠加</strong>——三种环境共享 90% 工作流，只有外设能力不同。拆成三个文件意味着 90% 的内容写三遍。<br>• <strong>触发机制的单点性</strong>——三个独立 Skill 共享相似 description 会导致触发混乱或重复加载。单文件确保只有一个入口。<br>• <strong>与 Context Window 不矛盾</strong>——环境适配段落占篇幅很小（每个约 10-15 行），不会造成显著的额外开销。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 11 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">11. 错误处理与容错机制</div>
+        <div class="item-title-sub">Fail-Closed 原则、Grader 深度验证、隐性声明</div>
+      </div>
+      <span class="item-score">80%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>Grader Agent 里有一条规则："When uncertain: The burden of proof to pass is on the expectation."——"存疑时，举证责任在通过方。"这体现了什么容错哲学？如果反过来——"存疑时默认通过"——会造成什么后果？</p>
+      </div>
+
+      <div class="discuss-section discuss-answer">
+        <div class="label">你的回答</div>
+        <p>如果默认通过，会导致 Skill 可能朝着意料之外的方向发展。对于软件设计，类似于测试工程师进行问题验证时，都是默认存疑不通过，然后通过测试用例，判断限定范围内通过，符合准出标准。</p>
+      </div>
+
+      <div class="discuss-section discuss-question">
+        <div class="label">你提出的不懂的概念</div>
+        <p>你表示没有理解"反噬 eval 本身"和"隐性声明"两个概念。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">概念解释</div>
+        <p><strong>"反噬 eval 本身"：</strong>Grader 不仅要给输出打分，还要反向审查测试题出得有没有问题。例如：如果 assertion 只检查"是否生成了 .pdf 文件"（文件名存在就通过），但没有检查内容是否正确，Grader 会主动报告这个 assertion 太弱。</p>
+        <p><strong>"隐性声明"：</strong>假设 Skill 产出了一个 PDF，Claude 的 transcript 里写了"表单有 12 个可填写字段"——这是 Claude 自己说的，不是任何 assertion 要求的。但 Grader 会主动提取这类声明并独立验证——真的有 12 个吗？如果只有 8 个，就抓出了一个 assertion 没覆盖到的错误。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p>软件工程中的 <strong>Fail-Closed 原则</strong>（默认拒绝）：</p>
+        <p>• "误杀"（把正确输出标为失败）→ 最多多改一轮<br>• "放过"（把错误输出标为通过）→ 带着虚假信心发布有缺陷的 Skill</p>
+        <p>Grader 构成了<strong>超出预设检查范围的深度防御层</strong>：<br>① 不仅验证预设 assertion，还主动提取并验证隐性声明<br>② 不仅评分输出，还反向审查 assertion 本身的质量（是否太弱、是否缺乏区分度）</p>
+        <p>整个容错体系由三个 subagent 构成：Grader（打分 + 质疑 eval）、Analyzer（寻找聚合统计掩盖的 pattern）、Comparator（盲对比 A/B 测试）。</p>
+      </div>
+
+    </div></div>
+  </div>
+
+  <!-- 学习项 12 -->
+  <div class="item-card" onclick="this.classList.toggle('open')">
+    <div class="item-summary">
+      <svg class="item-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      <div class="item-icon">&#10003;</div>
+      <div class="item-title-wrap">
+        <div class="item-title">12. 安全审计边界</div>
+        <div class="item-title-sub">策略层 + 实施层的双层防御</div>
+      </div>
+      <span class="item-score">80%</span>
+    </div>
+    <div class="item-detail"><div class="item-detail-inner">
+
+      <div class="discuss-section discuss-question">
+        <div class="label">导师提问</div>
+        <p>"Principle of Lack of Surprise"（通用安全原则）和 claude-api 的 provider marker 扫描（具体技术检查）分别防御的是什么类型的威胁？为什么两者需要同时存在？</p>
+      </div>
+
+      <div class="discuss-section discuss-mistake">
+        <div class="label">初始回答（后被精确化）</div>
+        <p>通用原则是功能层面的，具体检查是权限层面的。主要是应对现实中可能存在的安全和合规风险。</p>
+      </div>
+
+      <div class="discuss-section discuss-insight">
+        <div class="label">最终沉淀</div>
+        <p><strong>Lack of Surprise</strong> 防御的是<strong>恶意 Skill 设计</strong>——有人在 Skill 里藏恶意代码。它是一个<strong>信任边界</strong>的守卫。</p>
+        <div class="source-quote">Skills must not contain malware, exploit code, or any content that could compromise system security. A skill's contents should not surprise the user in their intent if described. — skill-creator SKILL.md</div>
+        <p><strong>Provider marker 扫描</strong> 防御的是<strong>范围越界</strong>——用户的项目已经是 OpenAI 生态的，claude-api Skill 不应该悄悄改写成 Anthropic 的。它是一个<strong>作用域边界</strong>的守卫。</p>
+        <p>两者必须同时存在，是安全工程里经典的<strong>策略 + 实施双层防御</strong>：<br>• 只有通用原则 → 太模糊，Claude 可能意识不到某个具体行为违反了原则<br>• 只有具体检查 → 太窄，只能拦截预定义模式，无法应对新型威胁</p>
+      </div>
+
+    </div></div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>学习会话完成 · 2026-04-19 · 3 维度 · 12 学习项 · 2 个纠正的认知误区</p>
+  <p style="margin-top:4px;">详细讨论记录保存于 session.md · 学习者档案保存于 learner-profile.md</p>
+</div>
+
+</div>
+
+<script>
+// Auto-expand if URL has hash
+if (location.hash) {
+  const idx = parseInt(location.hash.slice(1));
+  const cards = document.querySelectorAll('.item-card');
+  if (cards[idx]) {
+    cards[idx].classList.add('open');
+    cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+</script>
+</body>
+</html>

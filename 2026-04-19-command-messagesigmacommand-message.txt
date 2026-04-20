@@ -1,0 +1,188 @@
+
+╭─── Claude Code v2.1.29 ──────────────────────────────────────────────────────╮
+│                               │ Tips for getting started                     │
+│         Welcome back!         │ Run /init to create a CLAUDE.md file with i… │
+│                               │ ──────────────────────────────────────────── │
+│            ▐▛███▜▌            │ Recent activity                              │
+│           ▝▜█████▛▘           │ No recent activity                           │
+│             ▘▘ ▝▝             │                                              │
+│                               │                                              │
+│   glm-5 · API Usage Billing   │                                              │
+│       ~/project/skills        │                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  /model to try Opus 4.5
+
+我想要深入解构并学习当前目录下克隆的 Anthropic 官方开源项目 `skills` 
+的底层架构设计与工程实践。我的目标是掌握官方团队是如何打造企业级、生产环境可用的
+ Agent Skill 的。
+
+【我的当前水平】
+我已经了解了社区开源项目中利用 Markdown 构建隐式状态机和逻辑路由的纯文本技巧。但
+我现在想探究官方“正规军”的解法：Anthropic 是如何结合系统指令（SKILL.md）、长文本
+参考文档（REFERENCE.md）以及底层自动化运行脚本（Python/Shell），来确保 Claude 
+在处理极度复杂任务（如生产级前端设计、复杂 PDF 
+解析、大面积重构）时的绝对稳定性和可重复性的。
+
+【我的终极目标】
+我希望通过阅读官方的标杆源码，提炼出 Anthropic 团队内部的“最佳实践（Best 
+Practices）”和“工程模式（Engineering Patterns）”。我的最终目标是能够融合社区设计
+的灵活性与官方设计的工程严谨性，编写出能在真实业务中落地的顶级复合型 Skill。
+
+【教学要求】
+请利用你的高阶掌握学习法和苏格拉底式提问，结合你自身作为 AI 终端的本地文件读取能
+力，对我进行引导式教学。教学语言为中文，遇到英文的常翻译，请你保留专有名词为英文
+，其余以中文形式教学。请围绕以下三个核心维度对我进行摸底和教学：
+
+1. 官方架构解剖学 (Official Skill Anatomy)：请你自己去读取这个仓库里的 
+`skills/skill-creator`、`skills/frontend-design` 
+等所有这类核心能力源码。然后问我：官方是如何在 `SKILL.md` 中进行“职责分离”的？他
+们是如何通过明确的审美或技术约束，避免大模型陷入千篇一律的“AI 味（AI 
+Style）”或生成泛泛之谈的？
+2. 静态知识与动态工具的边界 (Prompt vs. Code/Tools)：官方 Skill 
+中经常包含具体的工程化脚本（如测试、起服务）。请通过源码实例反问我：在设计一个复
+杂的自动化开发任务时，到底哪些核心逻辑应该“写死在 Prompt 
+里控制”，哪些动作必须“下放给底层代码工具执行”？
+3. 生产级防御与边界控制 (Production-grade Defenses)：官方是如何处理 Edge Cases 
+的？他们是如何确保大模型在执行自动化流程时的安全审计和容错机制的？
+
+**绝对不要直接给我长篇大论的总结或直接把源码喂给我。** 
+第一步动作：请你先利用文件读取工具扫描当前 `skills` 目录，挑选 `frontend-design`
+ 或 `skill-creator` 等核心技能中的 `SKILL.md` 
+源码。基于官方写的某一段极其硬核的约束规则，向我抛出一个“架构设计判断题或反问”，
+测试我对“官方生产级稳定性设计”的底层理解。 
+
+⏺ 好的，我先扫描仓库结构，然后深入阅读核心 Skill 的源码，为我们的教学做准备。
+
+.... 中间学习过程省略
+
+⏺ 已完成。现在 roadmap.html 是一个完整的学习全景记录，包含：
+
+  - 12 个可展开的卡片，点击任意一个就能看到完整讨论过程
+  - 每个卡片内部按颜色编码区分：
+    - 青色左边框 = 导师提问
+    - 灰色左边框 = 你的回答
+    - 琥珀色左边框 = 错误/纠正（含你的初始答案和导师的反例）
+    - 绿色左边框 = 最终沉淀的认知
+  - 包含源码引用块（灰色斜体框），保留官方原文
+  - 维度三第 11 项特别记录了你主动提出的不懂的概念（反噬 eval、隐性声明）及解释
+
+  刷新浏览器查看效果。
+
+✻ Cogitated for 3m 58s
+
+❯ 前面是我的学习记录，现在输出一份“标准答案”，通过html 可交互、可视化的展示项目的设计与流程，能够从视觉层面更好的理解整个设计。                  
+
+⏺ Write(sigma/official-skill-architecture/architecture-guide.html)
+  ⎿  Wrote 610 lines to
+     sigma/official-skill-architecture/architecture-guide.html
+     <!DOCTYPE html>
+     <html lang="zh-CN">
+     <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Anthropic Skills 架构设计全景图</title>
+     <style>
+     :root{--bg:#08080c;--surface:rgba(255,255,255,0.03);--surface2:rgba(25
+     5,255,255,0.06);--border:rgba(255,255,255,0.06);--text:#ededef;--text2
+     :rgba(255,255,255,0.55);--text3:rgba(255,255,255,0.3);--c1:#06b6d4;--c
+     2:#34d399;--c3:#f59e0b;--c4:#f87171;--grad:linear-gradient(135deg,var(
+     --c1),var(--c2));--font-mono:'SF Mono','Fira Code','JetBrains 
+     Mono',monospace;--font-sans:-apple-system,'Inter',system-ui,sans-serif
+     ;--r:10px}
+     *{margin:0;padding:0;box-sizing:border-box}
+     body{background:var(--bg);color:var(--text);font-family:var(--font-san
+     s);line-height:1.6;min-height:100vh}
+     … +600 lines (ctrl+o to expand)
+
+⏺ Bash(open /Users/ranna/project/skills/sigma/official-skill-architecture/archit
+      ecture-guide.html)
+  ⎿  (No content)
+
+⏺ architecture-guide.html 已生成并打开。这是一个可交互的可视化参考手册，包含 6
+  个页面：
+
+  1. 总览 — 完整生命周期流程图（触发 → 加载 → 产出）+ Progressive Disclosure
+  三层可视化
+  2. 解剖结构 — SKILL.md 目录结构树 + Frontmatter 字段详解 + 工作流/知识库两种
+  Body 模式对比
+  3. 控制策略 — 从产出可验证性出发的决策流程图 + 写作风格选择对比 +
+  负面约束模式图解
+  4. Prompt vs Code — 三层判断法则流程 + 源码对照（scripts 黑盒 vs
+  知识模式代码）+ Reference 架构选择
+  5. 防御体系 — 四层 Context Window 防御可视化 + Fail-Closed 原则 +
+  安全审计双层防御 + 跨环境适配
+  6. 决策速查 — 表格形式的关键架构决策速查 + 8 条核心原则清单
+
+  顶部有导航栏可以切换页面。刷新浏览器查看效果。
+
+✻ Worked for 3m 45s
+
+❯ 然后逐个拆解单个的skill的设计，生成对应的html，你觉得是逐个生成还是你列个 
+  清单呢？                                                                  
+
+⏺ 先列清单。原因有两个：
+
+  1. 17 个 Skill 的价值密度不同，逐个全部生成既浪费时间也有大量重复模式
+  2. 让你选择优先级，比我自己决定更高效
+
+  让我先按学习价值分层：
+
+⏺ User answered Claude's questions:
+  ⎿  · 以下是 4 个最具架构代表性的 
+     Skill（覆盖了所有核心模式）。你想先拆解哪些？ → skill-creator, 
+     frontend-design, pdf, claude-api
+     · 这些是补充学习价值的 Skill。你想纳入吗？ → mcp-builder, 
+     webapp-testing, 文档三件套, 创意三件套
+
+⏺ 全选了。一共 9 个拆解任务（4 个核心 + 4 个补充 + 1
+  个文档三件套合并）。让我列个生成计划：
+  顺序: 1
+  Skill: skill-creator
+  核心看点: 工作流型 Body + subagent 体系 + eval 循环
+  类型: 工程标杆
+  ────────────────────────────────────────
+  顺序: 2
+  Skill: frontend-design
+  核心看点: 前置约束型 + 负面清单 + 反 AI 味（仅43行）
+  类型: 约束标杆
+  ────────────────────────────────────────
+  顺序: 3
+  Skill: pdf
+  核心看点: 知识库型 + 三文件协作 + 代码即知识
+  类型: 工具标杆
+  ────────────────────────────────────────
+  顺序: 4
+  Skill: claude-api
+  核心看点: 多语言目录 + 路由过滤 + 语言检测
+  类型: 多变体标杆
+  ────────────────────────────────────────
+  顺序: 5
+  Skill: mcp-builder
+  核心看点: 工作流型 + reference 平铺 + eval 脚本
+  类型: 流程标杆
+  ────────────────────────────────────────
+  顺序: 6
+  Skill: webapp-testing
+  核心看点: 黑盒脚本 + Decision Tree 引导
+  类型: 黑盒标杆
+  ────────────────────────────────────────
+  顺序: 7
+  Skill: 文档三件套
+  核心看点: docx/pptx/xlsx 共享模式分析
+  类型: 文档模式
+  ────────────────────────────────────────
+  顺序: 8
+  Skill: 创意三件套
+  核心看点: algorithmic-art/canvas-design/theme-factory
+  类型: 创意约束
+  ────────────────────────────────────────
+  顺序: 9
+  Skill: 其余
+  核心看点: brand-guidelines、internal-comms、doc-coauthoring 等
+  类型: 轻量级
+  这些会生成到 sigma/official-skill-architecture/skills/ 目录下，每个 Skill 一个
+   HTML 文件。
+
+  由于数量多、每个都需要重新阅读源码并设计可视化，我会分批生成。现在开始第一批：
+  skill-creator 和 frontend-design（这两个是全书的核心，先确保质量）。
